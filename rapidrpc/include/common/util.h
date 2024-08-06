@@ -6,5 +6,8 @@
 namespace rapidrpc {
 pid_t getPid();
 pid_t getThreadId();
+
+ssize_t readn(int fd, void *buf, size_t count);
+ssize_t writen(int fd, const void *buf, size_t count);
 } // namespace rapidrpc
 #endif // !RAPIDRPC_COMMON_UTIL_H

@@ -19,13 +19,13 @@ std::string formatString(const char *str, Args &&...args) {
     return result;
 }
 
-// TODO: add __FILE__ and __LINE__
 //* debug log macro
 #define DEBUGLOG(str, ...)                                                                                             \
     if (rapidrpc::Logger::GetGlobalLogger()->getLogLevel() <= rapidrpc::LogLevel::Debug) {                             \
-        rapidrpc::Logger::GetGlobalLogger()->pushLog((new rapidrpc::LogEvent(rapidrpc::LogLevel::Debug))->toString()   \
-                                                     + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__)    \
-                                                     + "]\t" + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");     \
+        rapidrpc::Logger::GetGlobalLogger()->pushLog(                                                                  \
+            (new rapidrpc::LogEvent(rapidrpc::LogLevel::Debug))->toString()                                            \
+            + ("[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t")                                   \
+            + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                      \
         rapidrpc::Logger::GetGlobalLogger()->log();                                                                    \
     }
 

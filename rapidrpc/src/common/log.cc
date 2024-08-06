@@ -82,6 +82,7 @@ void Logger::pushLog(const std::string &msg) {
     m_buffer.push(msg);
 }
 
+// TODO: write to file
 void Logger::log() {
     // 线程安全性保证
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -94,8 +95,8 @@ void Logger::log() {
 
         printf("%s", msg.c_str());
         // debug for logger
-        // TODO:
-        printf("%p\n", this);
+        // TODO: print logger address
+        // printf("%p\n", this);
     }
 }
 

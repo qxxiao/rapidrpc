@@ -5,7 +5,7 @@ set(project_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
-set(CMAKE_CXX_FLAGS "-g -O0 -Wall -Wno-deprecated -Wno-unused-but-set-variable")
+set(CMAKE_CXX_FLAGS "-g -O0 -Wall -Wno-format-security -Wno-unused-but-set-variable")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
