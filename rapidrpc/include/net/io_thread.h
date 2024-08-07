@@ -15,6 +15,7 @@ public:
 
     /**
      * @brief 获取线程的 EventLoop 对象
+     * @note 用于获取该线程的 EventLoop 对象，用于添加事件，例如常规套接字事件，定时任务，停止线程loop等
      */
     EventLoop *getEventLoop();
 

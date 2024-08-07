@@ -1,0 +1,84 @@
+#include "common/config.h"
+#include "net/eventloop.h"
+#include "net/fd_event.h"
+#include "common/log.h"
+#include "net/timer.h" // dup in eventloop.h
+#include "net/io_thread.h"
+#include "net/io_thread_group.h"
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <unistd.h>
+
+using namespace std;
+using TriggerEvent = rapidrpc::FdEvent::TriggerEvent;
+
+int main() {
+    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+
+    // rapidrpc::EventLoop eventloop; // contains a wakeup fd event
+
+    // create a listen socket
+    int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listen_fd < 0) {
+        ERRORLOG("Failed to create listen socket");
+        return -1;
+    }
+
+    // bind the listen socket
+    sockaddr_in addr; // net address
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(12345);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    // inet_aton("127.0.0.1", &addr.sin_addr);
+
+    int opt = 1;
+    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    int rt = bind(listen_fd, (sockaddr *)&addr, sizeof(addr));
+    if (rt < 0) {
+        ERRORLOG("Failed to bind listen socket");
+        return -1;
+    }
+
+    rt = listen(listen_fd, 100);
+    if (rt < 0) {
+        ERRORLOG("Failed to listen on listen_fd");
+        return -1;
+    }
+
+    rapidrpc::FdEvent lfd_event(listen_fd);
+    lfd_event.listen(TriggerEvent::IN_EVENT, [listen_fd]() {
+        // 可读取事件的回调函数
+        sockaddr_in peer_addr;
+        socklen_t peer_addr_len = sizeof(peer_addr);
+        memset(&peer_addr, 0, sizeof(peer_addr));
+        int client_fd = accept(listen_fd, (sockaddr *)&peer_addr, &peer_addr_len);
+        if (client_fd < 0) {
+            ERRORLOG("Failed to accept client connection");
+            return;
+        }
+        DEBUGLOG("Accepted a client connection [%s:%d]", inet_ntoa(peer_addr.sin_addr), ntohs(peer_addr.sin_port));
+    });
+
+    // test ===============================================
+    rapidrpc::IOThreadGroup io_thread_group(2); // 2 threads in group
+
+    // timer event
+    int i = 0;
+    rapidrpc::TimerEvent::s_ptr timer_event = std::make_shared<rapidrpc::TimerEvent>(5000, true, [&i]() {
+        INFOLOG("Timer event triggered, i = %d", i++);
+    });
+
+    // poll io_thread from io_thread_group
+    io_thread_group.getIOThread()->getEventLoop()->addEpollEvent(&lfd_event);  // listen fd event
+    io_thread_group.getIOThread()->getEventLoop()->addTimerEvent(timer_event); // timer event
+
+    io_thread_group.start(); // start all threads's eventloop while cycle in group
+    io_thread_group.join();
+
+    // wait
+    return 0;
+}

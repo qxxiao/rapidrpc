@@ -141,14 +141,18 @@ void EventLoop::loop() {
                     // add task
                     auto tmp = fd_event->getHandler(FdEvent::TriggerEvent::IN_EVENT);
                     addTask(fd_event->getHandler(FdEvent::TriggerEvent::IN_EVENT));
-                    DEBUGLOG("fd[%d] trigger IN event", fd_event->getFd()); // add task
+                    DEBUGLOG("%s[%d] trigger IN event",
+                             (fd_event->getFd() == m_timer->getFd()
+                                  ? "Timer fd"
+                                  : (fd_event->getFd() == m_wakeup_event->getFd() ? "Wakeup fd" : "fd")),
+                             fd_event->getFd());
                 }
                 // 可写事件
                 if (trigger_event.events & EPOLLOUT) {
                     // add task
                     auto tmp = fd_event->getHandler(FdEvent::TriggerEvent::OUT_EVENT);
                     addTask(fd_event->getHandler(FdEvent::TriggerEvent::OUT_EVENT));
-                    DEBUGLOG("fd[%d] trigger OUT event", fd_event->getFd()); // add task
+                    DEBUGLOG("fd[%d] trigger OUT event", fd_event->getFd());
                 }
                 // wakeup event triggered by m_wakeup_fd readable
             }
