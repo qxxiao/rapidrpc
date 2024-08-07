@@ -22,7 +22,15 @@ public:
     ~EventLoop();
 
     void loop();
+
+    /**
+     * @brief 唤醒 EventLoop
+     */
     void wakeup();
+
+    /**
+     * @brief 停止 EventLoop
+     */
     void stop();
 
     /**
@@ -52,7 +60,8 @@ public:
      * @brief 添加任务到队列，注意：当前线程的 EventLoop 循环跳出后才执行队列中的任务
      * @param cb: 任务函数/回调函数
      * @param is_wakeup: 是否立即唤醒此 EventLoop 线程, 将任务加到该线程的任务队列中立即唤醒该 LOOP
-     * 线程。主要作用是，用于唤醒线程快速执行任务队列中的任务，例如 迅速添加 fd 到 epoll 中，例如删除 fd等等。
+     * 线程。主要作用是，主线程添加任务并唤醒该Loop线程去执行任务队列中的任务，例如 迅速添加 fd 到 epoll 中，例如删除
+     * fd等等。
      */
     void addTask(std::function<void()> cb, bool is_wakeup = false);
 
@@ -65,8 +74,8 @@ public:
 private:
     void handleWakeUp();
 
-    void initWakeupFdEvent();
-    void initTimer();
+    void initWakeupFdEvent(); // add wakeup fd to epoll
+    void initTimer();         // add timer fd to epoll
 
 private:
     pid_t m_tid{0}; // 线程id
