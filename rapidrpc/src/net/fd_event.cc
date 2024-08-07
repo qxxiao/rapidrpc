@@ -14,6 +14,11 @@ FdEvent::FdEvent(int fd) : m_fd(fd) {
     memset(&m_listen_events, 0, sizeof(m_listen_events));
 }
 
+FdEvent::FdEvent() {
+    // ! 初始化 m_listen_events, 避免监听事件未设置
+    memset(&m_listen_events, 0, sizeof(m_listen_events));
+}
+
 FdEvent::~FdEvent() {
     // if (m_fd > 0) {
     //     close(m_fd);

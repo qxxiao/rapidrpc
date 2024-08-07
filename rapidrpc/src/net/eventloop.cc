@@ -23,7 +23,8 @@
     if (rt < 0) {                                                                                                      \
         ERRORLOG("Failed to add fd_event[fd=%d] to epoll, error [%s]", event->getFd(), strerror(errno));               \
     }                                                                                                                  \
-    DEBUGLOG("Add fd_event[fd=%d] to epoll successfully", event->getFd());
+    else                                                                                                               \
+        DEBUGLOG("Add fd_event[fd=%d] to epoll successfully", event->getFd());
 
 // micro to delete epoll event
 // with local variable (it,rt)
@@ -61,6 +62,28 @@ EventLoop::EventLoop() {
         ERRORLOG("Failed to create epoll fd, error [%s]", strerror(errno));
         exit(0);
     }
+
+    initWakeupFdEvent(); // 添加 m_wakeup_fd 到 epoll 中
+    initTimer();         // 添加定时器 m_Timer 到 epoll 中
+
+    INFOLOG("EventLoop created in thread %d", m_tid);
+    t_current_loop = this;
+}
+
+EventLoop::~EventLoop() {
+    // TODO : close all listen fds
+    close(m_epoll_fd);
+    if (m_wakeup_event) {
+        delete m_wakeup_event;
+        m_wakeup_event = nullptr;
+    }
+    if (m_timer) {
+        delete m_timer;
+        m_timer = nullptr;
+    }
+}
+
+void EventLoop::initWakeupFdEvent() {
     // * 每个 EventLoop 都有一个 wakeup_fd 用于唤醒
     // （外部通过该 EventLoop 的 m_wakeup_fd 写入，唤醒事件等待）
     int wakeup_fd = eventfd(0, EFD_NONBLOCK);
@@ -74,18 +97,11 @@ EventLoop::EventLoop() {
     // 将 m_wakeup_fd 添加到 epoll 中
     // m_wakeup_event/ m_wakeup_fd 是特定功能的 eventfd, 用于唤醒 epoll_wait
     addEpollEvent(m_wakeup_event);
-
-    INFOLOG("EventLoop created in thread %d", m_tid);
-    t_current_loop = this;
 }
 
-EventLoop::~EventLoop() {
-    // TODO : close all listen fds
-    close(m_epoll_fd);
-    if (m_wakeup_event) {
-        delete m_wakeup_event;
-        m_wakeup_event = nullptr;
-    }
+void EventLoop::initTimer() {
+    m_timer = new Timer(); // 创建定时器,完成了初始化
+    addEpollEvent(m_timer);
 }
 
 void EventLoop::loop() {
@@ -208,6 +224,11 @@ void EventLoop::addTask(std::function<void()> cb, bool is_wakeup) {
     }
     if (is_wakeup)
         wakeup();
+}
+
+//* 添加定时任务
+void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
+    m_timer->addTimerEvent(event);
 }
 
 bool EventLoop::isInLoopThread() {

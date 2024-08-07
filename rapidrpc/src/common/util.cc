@@ -1,7 +1,9 @@
 #include "common/util.h"
-#include <sys/syscall.h>
 
+#include <sys/syscall.h>
+#include <sys/time.h>
 #include <errno.h>
+#include <time.h>
 
 namespace rapidrpc {
 
@@ -65,6 +67,36 @@ ssize_t readn(int fd, void *buf, size_t count) {
         bytes_read += result;
     }
     return bytes_read;
+}
+
+int64_t getNowMs() {
+    struct timeval tv;
+    gettimeofday(&tv, nullptr);
+    int64_t now = (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    return now;
+}
+
+// for debug log
+std::string getFormatTime(int64_t ms) {
+
+    time_t seconds = ms / 1000;
+    ms = ms % 1000;
+
+    struct tm localTime;
+    localtime_r(&seconds, &localTime);
+
+    char buf[64] = {0};
+    strftime(buf, sizeof(buf), "%y-%m-%d %H:%M:%S", &localTime);
+    std::string result(buf);
+    std::string str_ms = std::to_string(ms);
+    if (ms < 10) {
+        str_ms = "00" + str_ms;
+    }
+    else if (ms < 100) {
+        str_ms = "0" + str_ms;
+    }
+    result += "." + str_ms;
+    return result;
 }
 
 } // namespace rapidrpc

@@ -22,6 +22,11 @@ public:
     FdEvent(int fd);
     ~FdEvent();
 
+protected:
+    // * only can be called by derived class Timer
+    FdEvent();
+
+public:
     /**
      * @brief return callback function
      */

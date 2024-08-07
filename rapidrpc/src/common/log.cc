@@ -64,7 +64,6 @@ std::string LogEvent::toString() {
     int ms = now_time.tv_usec / 1000;
     // to 3 digits
     time_str = time_str + "." + (ms < 10 ? "00" : (ms < 100 ? "0" : "")) + std::to_string(ms);
-    // time_str = time_str + "." + std::to_string(ms);
 
     m_pid = getPid();
     m_tid = getThreadId();

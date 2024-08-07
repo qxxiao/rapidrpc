@@ -3,6 +3,7 @@
 
 #include "net/fd_event.h"
 #include <net/wakeup_fd_event.h>
+#include <net/timer.h>
 
 #include <sys/types.h>
 #include <set>
@@ -55,8 +56,17 @@ public:
      */
     void addTask(std::function<void()> cb, bool is_wakeup = false);
 
+    /**
+     * @brief 添加定时任务
+     * @param event: 定时任务
+     */
+    void addTimerEvent(TimerEvent::s_ptr event);
+
 private:
     void handleWakeUp();
+
+    void initWakeupFdEvent();
+    void initTimer();
 
 private:
     pid_t m_tid{0}; // 线程id
@@ -72,6 +82,8 @@ private:
 
     std::mutex m_mutex;
     std::queue<std::function<void()>> m_pending_tasks; // 待处理的任务(当前Loop循环结束后处理)
+
+    Timer *m_timer{nullptr}; // 定时器, 管理定时任务
 };
 } // namespace rapidrpc
 
