@@ -14,6 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # set cmake  binary directory
 set(EXECUTABLE_OUTPUT_PATH ${project_dir}/bin)
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${project_dir}/lib)
 include_directories(${project_dir}/include)
 
 # add sub directories

@@ -38,7 +38,7 @@ void Timer::onTimer() {
         auto it = m_pending_events.begin();
         while (it != m_pending_events.end() && it->first <= now) {
             // TODO: 读写冲突，是否需要加锁
-            if (!it->second->isCancled()) {
+            if (!it->second->isCanceled()) {
                 events.push_back(it->second);
             }
             it++;
@@ -50,7 +50,7 @@ void Timer::onTimer() {
 
     // 对于重复任务，重新添加到定时任务中
     for (auto &event : events) {
-        // !! 取之前已经判断过 isCancled
+        // !! 取之前已经判断过 isCanceled
         if (event->isRepeat()) {
             event->resetArriveTime();
             addTimerEvent(event);
@@ -130,8 +130,8 @@ void Timer::addTimerEvent(TimerEvent::s_ptr event) {
 
 void Timer::deleteTimerEvent(TimerEvent::s_ptr event) {
     // 删除定时任务
-    // TODO: cancle 这里一写一读，这里是否需要加锁，cancle 仅仅用于标记吗
-    event->setCancled(true);
+    // TODO: cancel 这里一写一读，这里是否需要加锁，cancel 仅仅用于标记吗
+    event->setCanceled(true);
 
     bool is_reset_timerfd = false;
     {

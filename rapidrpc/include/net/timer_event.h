@@ -27,12 +27,12 @@ public:
         return m_arrive_time;
     }
 
-    void setCancled(bool value) {
-        m_is_cancled = value;
+    void setCanceled(bool value) {
+        m_is_canceled = value;
     }
 
-    bool isCancled() const {
-        return m_is_cancled;
+    bool isCanceled() const {
+        return m_is_canceled;
     }
 
     bool isRepeat() const {
@@ -46,10 +46,10 @@ public:
     void resetArriveTime();
 
 private:
-    int64_t m_arrive_time;    // 到达时间点/时间戳
-    int64_t m_interval;       // 间隔时间
-    bool m_is_repeat{false};  // 是否重复
-    bool m_is_cancled{false}; // 是否取消
+    int64_t m_arrive_time;     // 到达时间点/时间戳
+    int64_t m_interval;        // 间隔时间
+    bool m_is_repeat{false};   // 是否重复
+    bool m_is_canceled{false}; // 是否取消
 
     std::function<void()> m_task; // 任务
 };
