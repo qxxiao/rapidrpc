@@ -71,6 +71,12 @@ public:
      */
     void addTimerEvent(TimerEvent::s_ptr event);
 
+    /**
+     * @brief 获取当前线程的 EventLoop 对象, 如果没有则创建一个
+     * @return EventLoop*: 当前线程的 EventLoop 对象
+     */
+    static EventLoop *GetCurrentEventLoop();
+
 private:
     void handleWakeUp();
 

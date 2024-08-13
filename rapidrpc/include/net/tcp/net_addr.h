@@ -40,10 +40,7 @@ public:
  */
 class IpNetAddr: public NetAddr {
 public:
-    /**
-     * Default constructor, for accept client address
-     */
-    IpNetAddr() = default;
+    IpNetAddr() = default; // only for accept client address
     /**
      * @param ip "xxx.xxx.xxx.xxx"
      */
@@ -79,6 +76,7 @@ public:
      */
     UnixNetAddr(const std::string &path);
     UnixNetAddr(const sockaddr_un &addr);
+    UnixNetAddr() = default; // only for accept client address
 
     sockaddr *getSockAddr() override;
     socklen_t getSockAddrLen() override;
@@ -99,7 +97,7 @@ public:
     Ip6NetAddr(const std::string &ip, uint16_t port);
     Ip6NetAddr(const std::string &addr);
     Ip6NetAddr(const sockaddr_in6 &addr);
-    Ip6NetAddr() = default;
+    Ip6NetAddr() = default; // only for accept client address
 
     sockaddr *getSockAddr() override;
     socklen_t getSockAddrLen() override;

@@ -4,7 +4,8 @@ FILE(GLOB test_eventloop_src_files  ${project_dir}/src/common/*.cc ${project_dir
 FILE(GLOB test_eventloop_timer_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_io_thread_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_io_thread_group_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
-FILE(GLOB test_net_addr_src_files ${project_dir}/src/common/*.cc ${project_dir}/src/net/tcp/*.cc)
+FILE(GLOB test_net_addr_src_files  ${project_dir}/src/common/*.cc  ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc)
+FILE(GLOB test_tcpserver_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc)
 
 
 
@@ -15,6 +16,7 @@ add_executable(test_eventloop_timer ${CMAKE_CURRENT_SOURCE_DIR}/test_eventloop_t
 add_executable(test_io_thread ${CMAKE_CURRENT_SOURCE_DIR}/test_io_thread.cc ${test_io_thread_src_files})
 add_executable(test_io_thread_group ${CMAKE_CURRENT_SOURCE_DIR}/test_io_thread_group.cc ${test_io_thread_group_src_files})
 add_executable(test_net_addr ${CMAKE_CURRENT_SOURCE_DIR}/test_net_addr.cc ${test_net_addr_src_files})
+add_executable(test_tcpserver ${CMAKE_CURRENT_SOURCE_DIR}/test_tcpserver.cc ${test_tcpserver_src_files})
 
 
 find_library(lib_tinyxml NAMES tinyxml PATHS /usr/lib/tinyxml) # 默认不会递归查找
@@ -28,3 +30,4 @@ target_link_libraries(test_eventloop_timer PRIVATE "${lib_tinyxml}")
 target_link_libraries(test_io_thread PRIVATE "${lib_tinyxml}")
 target_link_libraries(test_io_thread_group PRIVATE "${lib_tinyxml}")
 target_link_libraries(test_net_addr PRIVATE "${lib_tinyxml}")
+target_link_libraries(test_tcpserver PRIVATE "${lib_tinyxml}")

@@ -24,7 +24,7 @@
         ERRORLOG("Failed to add fd_event[fd=%d] to epoll, error [%s]", event->getFd(), strerror(errno));               \
     }                                                                                                                  \
     else                                                                                                               \
-        DEBUGLOG("Add fd_event[fd=%d] to epoll successfully", event->getFd());
+        DEBUGLOG("Add fd_event[fd=%d] to epoll", event->getFd());
 
 // micro to delete epoll event
 // with local variable (it,rt)
@@ -41,7 +41,7 @@
 
 namespace rapidrpc {
 
-// * 每个线程最多一个 EventLoop
+// * 每个线程最多一个 EventLoop, thread local 变量
 static thread_local EventLoop *t_current_loop = nullptr;
 static int g_epoll_max_timeout = 10000;
 static int g_epoll_max_events = 10;
@@ -237,6 +237,13 @@ void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
 
 bool EventLoop::isInLoopThread() {
     return getThreadId() == m_tid; // 判断是否在当前线程(即EventLoop所在的线程)
+}
+
+EventLoop *EventLoop::GetCurrentEventLoop() {
+    if (t_current_loop)
+        return t_current_loop;
+    t_current_loop = new EventLoop();
+    return t_current_loop;
 }
 
 } // namespace rapidrpc

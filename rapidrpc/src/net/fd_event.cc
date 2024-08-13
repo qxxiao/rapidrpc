@@ -53,4 +53,10 @@ void FdEvent::listen(TriggerEvent event, std::function<void()> callback) {
     m_listen_events.data.ptr = this; // set the pointer to this object
 }
 
+void FdEvent::close() {
+    if (m_fd > 0) {
+        ::close(m_fd);
+    }
+}
+
 } // namespace rapidrpc

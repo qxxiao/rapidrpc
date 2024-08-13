@@ -2,12 +2,14 @@
 #define RAPIDRPC_NET_TCP_TCP_ACCEPTOR_H
 
 #include "net/tcp/net_addr.h"
+#include <memory>
 
 namespace rapidrpc {
 
 class TcpAcceptor {
 
 public:
+    using s_ptr = std::shared_ptr<TcpAcceptor>;
     /**
      * Constructor
      * @param paddr Address to bind to
@@ -23,6 +25,11 @@ public:
     // Get the listening file descriptor
     int getListenFd() const {
         return m_listenfd;
+    }
+
+    // Get the address family
+    int getFamily() const {
+        return m_family;
     }
 
 private:

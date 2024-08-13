@@ -31,7 +31,7 @@ public:
      */
     void join();
 
-public:
+private:
     static void *Main(void *arg);
 
 private:

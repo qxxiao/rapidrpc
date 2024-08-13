@@ -47,6 +47,8 @@ public:
         return m_listen_events;
     }
 
+    void close();
+
 protected:
     // fd
     int m_fd{-1};
