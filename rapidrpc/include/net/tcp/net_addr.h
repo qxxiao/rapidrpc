@@ -5,8 +5,8 @@
  * Ip6NetAddr: IPv6 address, constructor with ip and port, constructor with addr, constructor with sockaddr_in6
  */
 
-#ifndef RAPIDRPC_NET_TCP_TCP_BUFFER_H
-#define RAPIDRPC_NET_TCP_TCP_BUFFER_H
+#ifndef RAPIDRPC_NET_TCP_NET_ADDR_H
+#define RAPIDRPC_NET_TCP_NET_ADDR_H
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -113,4 +113,4 @@ private:
 
 } // namespace rapidrpc
 
-#endif // !RAPIDRPC_NET_TCP_TCP_BUFFER_H
+#endif // !RAPIDRPC_NET_TCP_NET_ADDR_H

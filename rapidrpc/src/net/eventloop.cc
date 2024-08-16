@@ -24,7 +24,7 @@
         ERRORLOG("Failed to add fd_event[fd=%d] to epoll, error [%s]", event->getFd(), strerror(errno));               \
     }                                                                                                                  \
     else                                                                                                               \
-        DEBUGLOG("Add fd_event[fd=%d] to epoll", event->getFd());
+        DEBUGLOG("Add fd_event[fd=%d] to epoll(%s)", event->getFd(), (op == EPOLL_CTL_ADD ? "ADD" : "MOD"));
 
 // micro to delete epoll event
 // with local variable (it,rt)
@@ -139,8 +139,8 @@ void EventLoop::loop() {
                 // 可读事件
                 if (trigger_event.events & EPOLLIN) {
                     // add task
-                    auto tmp = fd_event->getHandler(FdEvent::TriggerEvent::IN_EVENT);
-                    addTask(fd_event->getHandler(FdEvent::TriggerEvent::IN_EVENT));
+                    auto tmp = fd_event->getHandler(TriggerEvent::IN_EVENT);
+                    addTask(fd_event->getHandler(TriggerEvent::IN_EVENT));
                     DEBUGLOG("%s[%d] trigger IN event",
                              (fd_event->getFd() == m_timer->getFd()
                                   ? "Timer fd"
@@ -150,8 +150,8 @@ void EventLoop::loop() {
                 // 可写事件
                 if (trigger_event.events & EPOLLOUT) {
                     // add task
-                    auto tmp = fd_event->getHandler(FdEvent::TriggerEvent::OUT_EVENT);
-                    addTask(fd_event->getHandler(FdEvent::TriggerEvent::OUT_EVENT));
+                    auto tmp = fd_event->getHandler(TriggerEvent::OUT_EVENT);
+                    addTask(fd_event->getHandler(TriggerEvent::OUT_EVENT));
                     DEBUGLOG("fd[%d] trigger OUT event", fd_event->getFd());
                 }
                 // wakeup event triggered by m_wakeup_fd readable

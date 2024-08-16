@@ -48,7 +48,7 @@ int main() {
         ERRORLOG("Invalid address");
         return -1;
     }
-    rapidrpc::TcpAcceptor tcpAcceptor(paddr, false); // blocking
+    rapidrpc::TcpAcceptor tcpAcceptor(paddr); // blocking accept
 
     // client addr
     rapidrpc::IpNetAddr clientAddr;

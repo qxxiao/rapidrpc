@@ -35,7 +35,7 @@ int TcpBuffer::writeToBuffer(const char *data, int len) {
 int TcpBuffer::readFromBuffer(std::vector<char> &data, int len) {
 
     if (readAvailable() <= 0 || len <= 0)
-        return -1;
+        return 0;
     if (data.capacity() < (unsigned long int)len)
         data.reserve(len);
     int read_len = std::min(len, readAvailable());
@@ -94,7 +94,7 @@ void TcpBuffer::moveReadIndex(int size) {
     shiftBuffer();
 }
 
-// TODO: ??? no meaning
+// TODO: 这个函数作用， read(socket) 需要手动来操作写入指针，读取到缓冲区是由操作系统完成的
 void TcpBuffer::moveWriteIndex(int size) {
     int new_write_index = m_write_index + size;
     if (new_write_index >= m_size) {

@@ -6,6 +6,11 @@
 
 namespace rapidrpc {
 
+enum class TriggerEvent {
+    IN_EVENT = EPOLLIN,   // 读事件
+    OUT_EVENT = EPOLLOUT, // 写事件
+};
+
 /**
  * @brief FdEvent class
  * 表示一个fd的事件，包括对应的回调函数
@@ -14,16 +19,14 @@ namespace rapidrpc {
 class FdEvent {
 
 public:
-    enum class TriggerEvent {
-        IN_EVENT = EPOLLIN,   // 读事件
-        OUT_EVENT = EPOLLOUT, // 写事件
-    };
-
     FdEvent(int fd);
     ~FdEvent();
 
+    // set non-blocking
+    void setNonBlocking();
+
 protected:
-    // * only can be called by derived class Timer
+    // 只用来构造空对象，用于 Timer 类的构造函数
     FdEvent();
 
 public:
@@ -47,7 +50,15 @@ public:
         return m_listen_events;
     }
 
+    /**
+     * @brief 关闭fd
+     */
     void close();
+
+    /**
+     * @brief 取消监听 TriggerEvent 事件和清空回调函数
+     */
+    void clearEvent(TriggerEvent event_type);
 
 protected:
     // fd

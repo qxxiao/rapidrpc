@@ -4,6 +4,8 @@
 #include "net/tcp/tcp_acceptor.h"
 #include "net/eventloop.h"
 #include "net/io_thread_group.h"
+#include "net/tcp/tcp_connection.h"
+#include <set>
 
 namespace rapidrpc {
 
@@ -22,6 +24,9 @@ public:
      * @brief 启动 TcpServer 的 MainReactor 的 EventLoop 以及 SubReactor 的 EventLoop
      */
     void start();
+
+    // 删除连接，由 TcpConnection 调用
+    void removeConnection(TcpConnection::w_ptr conn);
 
 private:
     // 初始化 EventFd, 将 Acceptor 的 fd 添加到主Reactor的监听集合中
@@ -42,6 +47,10 @@ private:
     FdEvent *m_listen_fd_event{nullptr}; // 监听 fd 的事件
 
     int m_client_counts{0}; // 客户端连接数
+
+    // 全局变量，用于保存所有的连接
+    std::set<TcpConnection::s_ptr> m_connections;
+    std::mutex m_mutex; // 保护 m_connections
 };
 } // namespace rapidrpc
 

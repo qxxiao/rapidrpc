@@ -19,7 +19,7 @@ Timer::Timer() : FdEvent() {
     DEBUGLOG("create Timer fd: %d", m_fd);
 
     // 设置定时器fd 的监听事件为可读，和回调函数(当前对象的onTimer)
-    listen(FdEvent::TriggerEvent::IN_EVENT, std::bind(&Timer::onTimer, this));
+    listen(TriggerEvent::IN_EVENT, std::bind(&Timer::onTimer, this));
 }
 
 Timer::~Timer() {}

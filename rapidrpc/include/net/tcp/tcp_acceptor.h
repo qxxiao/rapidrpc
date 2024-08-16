@@ -14,9 +14,9 @@ public:
      * Constructor
      * @param paddr Address to bind to
      * @param backlog Maximum number of pending connections
-     * @note set Non-blocking and Reuse address for Eventloop use
+     * @note set Non-blocking(by fd_event) and Reuse address for Eventloop use
      */
-    TcpAcceptor(const NetAddr::s_ptr paddr, bool isNonBlock = true, int backlog = 1000);
+    TcpAcceptor(const NetAddr::s_ptr paddr, int backlog = 1000);
     ~TcpAcceptor();
 
     // Accept a connection, return the client file descriptor

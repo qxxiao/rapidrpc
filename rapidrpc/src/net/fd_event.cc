@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 namespace rapidrpc {
 
@@ -23,6 +24,18 @@ FdEvent::~FdEvent() {
     // if (m_fd > 0) {
     //     close(m_fd);
     // }
+}
+
+void FdEvent::setNonBlocking() {
+    int flags = fcntl(m_fd, F_GETFL, 0);
+    if (flags < 0) {
+        ERRORLOG("FdEvent::setNonBlocking, get flags failed, fd[%d]", m_fd);
+        return;
+    }
+    if (!(flags & O_NONBLOCK) && fcntl(m_fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        ERRORLOG("FdEvent::setNonBlocking, set non-blocking failed, fd[%d]", m_fd);
+        return;
+    }
 }
 
 // * 应该只能被调用一次
@@ -56,6 +69,18 @@ void FdEvent::listen(TriggerEvent event, std::function<void()> callback) {
 void FdEvent::close() {
     if (m_fd > 0) {
         ::close(m_fd);
+    }
+    memset(&m_listen_events, 0, sizeof(m_listen_events));
+}
+
+void FdEvent::clearEvent(TriggerEvent event) {
+    if (event == TriggerEvent::IN_EVENT) {
+        m_listen_events.events &= ~EPOLLIN;
+        m_read_callback = nullptr;
+    }
+    else {
+        m_listen_events.events &= ~EPOLLOUT;
+        m_write_callback = nullptr;
     }
 }
 

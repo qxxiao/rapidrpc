@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 using namespace std;
-using TriggerEvent = rapidrpc::FdEvent::TriggerEvent;
+using TriggerEvent = rapidrpc::TriggerEvent;
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");

@@ -5,7 +5,7 @@
 
 namespace rapidrpc {
 
-TcpAcceptor::TcpAcceptor(const NetAddr::s_ptr paddr, bool isNonBlock, int backlog) : m_addr(paddr), m_backlog(backlog) {
+TcpAcceptor::TcpAcceptor(const NetAddr::s_ptr paddr, int backlog) : m_addr(paddr), m_backlog(backlog) {
     if (!paddr || !*m_addr) {
         ERRORLOG("Invalid address");
         exit(-1);
@@ -23,13 +23,13 @@ TcpAcceptor::TcpAcceptor(const NetAddr::s_ptr paddr, bool isNonBlock, int backlo
         ERRORLOG("Failed to set reuse addr");
     }
     // nonblock
-    if (isNonBlock) {
-        int flags = fcntl(m_listenfd, F_GETFL, 0);                // get old flags
-        if (fcntl(m_listenfd, F_SETFL, flags | O_NONBLOCK) < 0) { // set nonblock
-            ERRORLOG("Failed to set nonblock");
-            exit(-1);
-        }
-    }
+    // if (isNonBlock) {
+    //     int flags = fcntl(m_listenfd, F_GETFL, 0);                // get old flags
+    //     if (fcntl(m_listenfd, F_SETFL, flags | O_NONBLOCK) < 0) { // set nonblock
+    //         ERRORLOG("Failed to set nonblock");
+    //         exit(-1);
+    //     }
+    // }
 
     if (bind(m_listenfd, m_addr->getSockAddr(), m_addr->getSockAddrLen()) < 0) {
         ERRORLOG("Failed to bind socket");
@@ -49,7 +49,7 @@ int TcpAcceptor::accept(NetAddr &clientAddr) {
         socklen_t len = sizeof(addr);
         int clientfd = ::accept(m_listenfd, (sockaddr *)&addr, &len);
         // TODO: non-blocking
-        if (clientfd < 0) {
+        if (clientfd < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK)) {
             ERRORLOG("Failed to accept connection");
             return -1;
         }

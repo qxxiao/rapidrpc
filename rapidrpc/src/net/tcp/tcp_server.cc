@@ -31,14 +31,13 @@ void TcpServer::init() {
 
     // FdEvent listen_fd_event(m_acceptor->getListenFd());
     m_listen_fd_event = new FdEvent(m_acceptor->getListenFd());
-    m_listen_fd_event->listen(FdEvent::TriggerEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
+    m_listen_fd_event->setNonBlocking(); // set non-blocking
+    m_listen_fd_event->listen(TriggerEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
     // add listen_fd_event to mainReactor
     m_main_event_loop->addEpollEvent(m_listen_fd_event);
 }
 
 void TcpServer::onAccept() {
-    // client addr, IpNetAddr/IpV6NetAddr/UnixNetAddr for different family
-    // IpNetAddr client_addr;
     // nothing to do with client_addr, just for accept
     NetAddr::s_ptr client_addr;
     if (m_acceptor->getFamily() == AF_INET) {
@@ -55,14 +54,33 @@ void TcpServer::onAccept() {
         ERRORLOG("Failed to accept connection");
         return;
     }
-    m_client_counts++;
-    // TODO: add client_fd to subReactor
-    // test...
+    // add conn(client_fd) to IOThread
+    IOThread *io_thread = m_io_thread_group->getIOThread(); // get next IOThread
+    TcpConnection::s_ptr conn = std::make_shared<TcpConnection>(io_thread, client_fd, 1024, client_addr);
+    // ! set callback
+    conn->setRemoveConnCb(std::bind(&TcpServer::removeConnection, this, TcpConnection::w_ptr(conn)));
+    // add connection to set and increase client counts
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_client_counts++;
+        m_connections.insert(conn);
+    }
 }
 
 void TcpServer::start() {
     m_io_thread_group->start(); // 启动所有子线程的 EventLoop
     m_main_event_loop->loop();  // 启动主线程的 EventLoop
 };
+
+void TcpServer::removeConnection(TcpConnection::w_ptr conn) {
+    auto tmp_ptr = conn.lock();
+    if (!tmp_ptr) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(m_mutex);
+    int rt = m_connections.erase(tmp_ptr);
+    m_client_counts--;
+    DEBUGLOG("TcpServer remove [%d] connection, client counts: %d", rt, m_client_counts);
+}
 
 } // namespace rapidrpc

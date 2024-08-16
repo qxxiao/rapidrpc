@@ -2,10 +2,13 @@
 #define RAPIDRPC_NET_TCP_TCP_BUFFER_H
 
 #include <vector>
+#include <memory>
 
 namespace rapidrpc {
 
 class TcpBuffer {
+public:
+    using s_ptr = std::shared_ptr<TcpBuffer>;
 
 public:
     TcpBuffer(int size);
@@ -33,7 +36,8 @@ public:
      * @brief read data from the buffer
      * @param data the data to read
      * @param len the length to read
-     * @return the number of bytes read, always equal to data.size() if data.size = 0 when call. If len<=available, return len, else return available.
+     * @return the number of bytes read, min(readAvailable(), len)
+     * @note 满足 data.capacity() >= len
      */
     int readFromBuffer(std::vector<char> &data, int len);
 
@@ -46,14 +50,20 @@ public:
     /**
      * @brief move writeIndex forward by size bytes
      * @param size the number of bytes to move, should be less than writeAvailable()
+     * @note 用于操作系统读取写入socket数据后，移动指针，需要保证移动的字节数小于可写字节数（可写字节数量要预先足够）
      */
     void moveWriteIndex(int size);
 
     int readIndex() const;
     int writeIndex() const;
 
-private:
+    /**
+     * @brief resize the buffer
+     * @note 将可读数据移到 buffer 的最前面，并将 buffer 扩大到 size
+     */
     void resizeBuffer(int size);
+
+private:
     void shiftBuffer();
 
 private:
@@ -61,6 +71,7 @@ private:
     int m_write_index{0};
     int m_size{0}; // size of the buffer
 
+public:
     std::vector<char> m_buffer; // the buffer
 };
 } // namespace rapidrpc

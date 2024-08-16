@@ -16,7 +16,7 @@ Logger *Logger::GetGlobalLogger() {
         return g_logger;
     }
     if (!Config::GetGlobalConfig()) {
-        printf("Config is not set\n");
+        printf("Logger::GetGlobalLogger, Config is not set\n");
         exit(0);
     }
     // default is INFO(unkown level string)
