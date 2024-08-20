@@ -105,6 +105,7 @@ void EventLoop::initTimer() {
 }
 
 void EventLoop::loop() {
+    m_is_looping = true;
     while (!m_stop_flag) {
         // 处理并清空任务队列，避免循环前队列不为空
         std::queue<std::function<void()>> tasks;
@@ -244,6 +245,10 @@ EventLoop *EventLoop::GetCurrentEventLoop() {
         return t_current_loop;
     t_current_loop = new EventLoop();
     return t_current_loop;
+}
+
+bool EventLoop::isLooping() const {
+    return m_is_looping;
 }
 
 } // namespace rapidrpc

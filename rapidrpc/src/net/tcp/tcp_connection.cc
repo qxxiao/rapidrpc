@@ -1,6 +1,15 @@
+/**
+ * @brief TcpConnection 类，建立的连接类，用于处理连接的读写事件
+ * @note 可用于表示服务端建立的连接，也可用于表示客户端建立的连接，主要区别：
+ * 1. 处理的先后逻辑不同，服务端：先读取数据，然后处理数据，最后发送数据；客户端：先发送数据，然后读取数据
+ * 2. 监听的初始化事件不同，服务端：accept 建立连接后直接监听可读事件；客户端：在需要发送请求之前监听可写事件
+ * 3. 服务端和客户端，在使用 BUFFER 时顺序相反，使用上没有区别
+ */
+
 #include "net/tcp/tcp_connection.h"
 #include "net/fd_event_group.h"
 #include "common/log.h"
+#include "net/string_coder.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -8,8 +17,9 @@
 
 namespace rapidrpc {
 
-TcpConnection::TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
-    : m_peer_addr(peer_addr), m_io_thread(io_thread) {
+TcpConnection::TcpConnection(EventLoop *event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr,
+                             TcpConnectionType conn_type /*= TcpConnectionType::TcpConnectionByServer */)
+    : m_peer_addr(peer_addr), m_event_loop(event_loop), m_state(TcpState::NotConnected), m_conn_type(conn_type) {
 
     m_in_buffer = std::make_shared<TcpBuffer>(buffer_size);
     m_out_buffer = std::make_shared<TcpBuffer>(buffer_size);
@@ -18,11 +28,13 @@ TcpConnection::TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAd
     // ! 如果需要一次读完，非阻塞模式更容易判断；阻塞使用超时时间或者使用上层协议格式
     m_fd_event = FdEventGroup::GetGlobalFdEventGroup()->getFdEvent(fd);
     m_fd_event->setNonBlocking();
-    // 设置读事件回调函数
-    m_fd_event->listen(TriggerEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
-    // !!添加到 epoll 中
-    m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
-    m_state = TcpState::Connected;
+
+    m_coder = std::make_shared<StringCoder>();
+
+    // 设置读事件回调函数并添加到 epoll 中（TcpConnectionByServer）
+    if (m_conn_type == TcpConnectionType::TcpConnectionByServer) {
+        listenReadEvent();
+    }
 }
 
 TcpConnection::~TcpConnection() {}
@@ -74,7 +86,7 @@ void TcpConnection::onRead() {
     // ! Close the connection
     if (m_state == TcpState::Closed) {
         // TODO: 关闭连接, 调用 fd_event 的 close
-        m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+        m_event_loop->deleteEpollEvent(m_fd_event);
         m_fd_event->close();
         if (m_remove_conn_cb) {
             m_remove_conn_cb();
@@ -90,20 +102,38 @@ void TcpConnection::onRead() {
 // ! 第一次有数据写入时，重新添加到 epoll 中，监听可写事件
 // ！ 并且在发送完后，清除写入事件，避免可写事件一直被触发
 void TcpConnection::execute() {
-    // TODO: 读取请求，应该需要判断完整的请求，然后执行
-    int len = m_in_buffer->readAvailable();
-    std::vector<char> data(len);
-    m_in_buffer->readFromBuffer(data, len);
+    if (m_conn_type == TcpConnectionType::TcpConnectionByServer) {
+        // 服务端连接
+        // TODO: 读取请求，应该需要判断完整的请求，然后执行
+        int len = m_in_buffer->readAvailable();
+        std::vector<char> data(len);
+        m_in_buffer->readFromBuffer(data, len);
 
-    std::string msg(data.begin(), data.end());
+        std::string msg(data.begin(), data.end());
 
-    // TODO: 解析请求
-    INFOLOG("success get request from client[%s], request[%s]", m_peer_addr->toString().c_str(), msg.c_str());
+        // TODO: 解析请求
+        INFOLOG("success get request from client[%s], request[%s]", m_peer_addr->toString().c_str(), msg.c_str());
 
-    m_out_buffer->writeToBuffer(msg.data(), msg.size());
-    // TODO: 可写，但是需要在写之前判断是否有数据
-    m_fd_event->listen(TriggerEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
-    m_io_thread->getEventLoop()->addEpollEvent(m_fd_event); //!!重新添加到 epoll 中(修改监听的事件)
+        m_out_buffer->writeToBuffer(msg.data(), msg.size());
+
+        listenWriteEvent();
+    }
+    else {
+        // 客户端连接
+        // * 从 buffer 中读取一条完整的消息，并执行其回调函数
+        // TODO: 解析1条完整的消息
+        std::vector<AbstractProtocol::s_ptr> messages;
+        m_coder->decode(messages, m_in_buffer);
+        // 假设解析出来了多条消息
+        for (size_t i = 0; i < messages.size(); i++) {
+            std::string req_id = messages[i]->getReqId();
+            auto it = m_read_cb.find(req_id);
+            if (it != m_read_cb.end()) {
+                it->second(messages[i]);
+                m_read_cb.erase(it);
+            }
+        }
+    }
 }
 
 void TcpConnection::onWrite() {
@@ -115,7 +145,18 @@ void TcpConnection::onWrite() {
         return;
     }
 
-    // write data to socket
+    // TODO: 客户端连接协议的处理
+    if (m_conn_type == TcpConnectionType::TcpConnectionByClient) {
+
+        std::vector<AbstractProtocol::s_ptr> messages;
+        // TODO: lock?
+        for (size_t i = 0; i < m_write_cb.size(); i++) {
+            messages.push_back(m_write_cb[i].first);
+        }
+        m_coder->encode(messages, m_out_buffer);
+    }
+
+    // test buffer size to send
     if (m_out_buffer->readAvailable() == 0)
         return;
 
@@ -147,10 +188,19 @@ void TcpConnection::onWrite() {
             // clear write event
             m_fd_event->clearEvent(TriggerEvent::OUT_EVENT);
             // 重新添加到 epoll 中, 已经存在的事件会被更新
-            m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+            m_event_loop->addEpollEvent(m_fd_event);
             break;
         }
         // n<len，尝试继续写
+    }
+
+    // TODO: 对客户端的写入数据后的回调函数执行
+    // * 只能保证将客户端原始数据编码后的数据保存到 m_out_buffer 发送缓冲区中后依次执行回调函数
+    if (m_conn_type == TcpConnectionType::TcpConnectionByClient) {
+        for (size_t i = 0; i < m_write_cb.size(); i++) {
+            m_write_cb[i].second(m_write_cb[i].first);
+        }
+        m_write_cb.clear();
     }
 }
 
@@ -169,7 +219,7 @@ void TcpConnection::shutdown() {
 
     // shut_rdwr 关闭了读写，对端会收到 FIN
     ::shutdown(m_fd_event->getFd(), SHUT_RDWR);
-    m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+    m_event_loop->deleteEpollEvent(m_fd_event);
     m_fd_event->close();
     if (m_remove_conn_cb) {
         m_remove_conn_cb();
@@ -178,6 +228,24 @@ void TcpConnection::shutdown() {
 
 void TcpConnection::setRemoveConnCb(std::function<void()> &&remove_conn_cb) {
     m_remove_conn_cb = std::move(remove_conn_cb);
+}
+
+void TcpConnection::listenWriteEvent() {
+    m_fd_event->listen(TriggerEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
+    m_event_loop->addEpollEvent(m_fd_event); //!!重新添加到 epoll 中(修改监听的事件)
+}
+
+void TcpConnection::listenReadEvent() {
+    m_fd_event->listen(TriggerEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
+    m_event_loop->addEpollEvent(m_fd_event);
+}
+
+void TcpConnection::addMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> write_cb) {
+    m_write_cb.emplace_back(message, write_cb);
+}
+
+void TcpConnection::addReadCb(const std::string &req_id, std::function<void(AbstractProtocol::s_ptr)> read_cb) {
+    m_read_cb[req_id] = read_cb;
 }
 
 } // namespace rapidrpc

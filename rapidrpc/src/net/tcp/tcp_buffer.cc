@@ -36,9 +36,9 @@ int TcpBuffer::readFromBuffer(std::vector<char> &data, int len) {
 
     if (readAvailable() <= 0 || len <= 0)
         return 0;
-    if (data.capacity() < (unsigned long int)len)
-        data.reserve(len);
     int read_len = std::min(len, readAvailable());
+    // !! 直接拷贝到 data 中，使用 resize 来调整大小
+    data.resize(read_len);
     std::memcpy(data.data(), m_buffer.data() + m_read_index, read_len);
     m_read_index += read_len;
     // ! check if shiftBuffer

@@ -5,54 +5,36 @@
 #include "net/tcp/net_addr.h"
 #include "common/log.h"
 #include "common/config.h"
+#include "net/tcp/tcp_client.h"
+#include "net/abstract_protocol.h"
+#include "net/string_coder.h" // string protocol
 #include <unistd.h>
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
 
-    // ipv4
-    // rapidrpc::IpNetAddr ipNetAddr("0.0.0.0:12345");
-    rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
+    // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
+    rapidrpc::NetAddr::s_ptr serverAddr = std::make_shared<rapidrpc::IpNetAddr>("198.19.249.138:12345");
 
-    // ===========================================================
-    int clifd = socket(AF_INET, SOCK_STREAM, 0);
-    if (clifd < 0) {
-        ERRORLOG("Failed to create socket");
-        return -1;
-    }
+    rapidrpc::TcpClient client(serverAddr);
 
-    // struct sockaddr_in server = *((sockaddr_in *)serverAddr.getSockAddr());
-    auto addr = serverAddr.getSockAddr();
-    auto addr_len = serverAddr.getSockAddrLen();
-    int ret = connect(clifd, addr, addr_len);
+    // 异步的连接远程地址 connect to peer_addr, 完成后发送一条消息
+    client.connect([&client]() {
+        DEBUGLOG("Connect to server success");
 
-    if (ret < 0) {
-        ERRORLOG("Failed to connect to server");
-        return -1;
-    }
+        rapidrpc::AbstractProtocol::s_ptr message = std::make_shared<rapidrpc::StringProtocol>("Hello, server");
+        message->setReqId("12345");
+        client.writeMessage(message, [](rapidrpc::AbstractProtocol::s_ptr message) {
+            DEBUGLOG("Write message success:%s",
+                     std::dynamic_pointer_cast<rapidrpc::StringProtocol>(message)->getStr().c_str());
+        });
 
-    INFOLOG("Connect to server success");
+        client.readMessage("12345", [](rapidrpc::AbstractProtocol::s_ptr message) {
+            DEBUGLOG("Read message success:%s",
+                     std::dynamic_pointer_cast<rapidrpc::StringProtocol>(message)->getStr().c_str());
+        });
+    });
 
-    for (int i = 0; i < 10; i++) {
-        char buf[1024] = "hello, world";
-        int n = write(clifd, buf, strlen(buf));
-        if (n < 0) {
-            ERRORLOG("Failed to write to server");
-            return -1;
-        }
-        INFOLOG("Write to server success");
-        // receive
-        char recv_buf[1024];
-        n = read(clifd, recv_buf, 1024);
-        if (n < 0) {
-            ERRORLOG("Failed to read from server");
-            return -1;
-        }
-        recv_buf[n] = '\0';
-        INFOLOG("Read from server success, content: %s", recv_buf);
-        sleep(2);
-    }
-
-    close(clifd);
+    sleep(10);
     return 0;
 }

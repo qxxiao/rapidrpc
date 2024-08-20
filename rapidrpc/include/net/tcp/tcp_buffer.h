@@ -69,7 +69,7 @@ private:
 private:
     int m_read_index{0};
     int m_write_index{0};
-    int m_size{0}; // size of the buffer
+    int m_size{0}; // size of the buffer // 底层 buffer 的总容量（这里 m_buffer.size() 没有意义）
 
 public:
     std::vector<char> m_buffer; // the buffer

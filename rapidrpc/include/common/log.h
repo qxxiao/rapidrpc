@@ -22,26 +22,25 @@ std::string formatString(const char *str, Args &&...args) {
 //* debug log macro
 #define DEBUGLOG(str, ...)                                                                                             \
     if (rapidrpc::Logger::GetGlobalLogger()->getLogLevel() <= rapidrpc::LogLevel::Debug) {                             \
-        rapidrpc::Logger::GetGlobalLogger()->pushLog(                                                                  \
-            (new rapidrpc::LogEvent(rapidrpc::LogLevel::Debug))->toString()                                            \
-            + ("[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t")                                   \
-            + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                      \
+        rapidrpc::Logger::GetGlobalLogger()->pushLog(rapidrpc::LogEvent(rapidrpc::LogLevel::Debug).toString() + "["    \
+                                                     + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"  \
+                                                     + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");             \
         rapidrpc::Logger::GetGlobalLogger()->log();                                                                    \
     }
 
 #define INFOLOG(str, ...)                                                                                              \
     if (rapidrpc::Logger::GetGlobalLogger()->getLogLevel() <= rapidrpc::LogLevel::Info) {                              \
-        rapidrpc::Logger::GetGlobalLogger()->pushLog((new rapidrpc::LogEvent(rapidrpc::LogLevel::Info))->toString()    \
-                                                     + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__)    \
-                                                     + "]\t" + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");     \
+        rapidrpc::Logger::GetGlobalLogger()->pushLog(rapidrpc::LogEvent(rapidrpc::LogLevel::Info).toString() + "["     \
+                                                     + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"  \
+                                                     + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");             \
         rapidrpc::Logger::GetGlobalLogger()->log();                                                                    \
     }
 
 #define ERRORLOG(str, ...)                                                                                             \
     if (rapidrpc::Logger::GetGlobalLogger()->getLogLevel() <= rapidrpc::LogLevel::Error) {                             \
-        rapidrpc::Logger::GetGlobalLogger()->pushLog((new rapidrpc::LogEvent(rapidrpc::LogLevel::Error))->toString()   \
-                                                     + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__)    \
-                                                     + "]\t" + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");     \
+        rapidrpc::Logger::GetGlobalLogger()->pushLog(rapidrpc::LogEvent(rapidrpc::LogLevel::Error).toString() + "["    \
+                                                     + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"  \
+                                                     + rapidrpc::formatString(str, ##__VA_ARGS__) + "\n");             \
         rapidrpc::Logger::GetGlobalLogger()->log();                                                                    \
     }
 

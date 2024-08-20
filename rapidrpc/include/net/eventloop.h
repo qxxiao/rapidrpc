@@ -77,6 +77,8 @@ public:
      */
     static EventLoop *GetCurrentEventLoop();
 
+    bool isLooping() const;
+
 private:
     void handleWakeUp();
 
@@ -99,6 +101,8 @@ private:
     std::queue<std::function<void()>> m_pending_tasks; // 待处理的任务(当前Loop循环结束后处理)
 
     Timer *m_timer{nullptr}; // 定时器, 管理定时任务
+
+    bool m_is_looping{false}; // 是否正在循环
 };
 } // namespace rapidrpc
 

@@ -1,5 +1,6 @@
 #include "net/tcp/tcp_server.h"
 #include "common/log.h"
+#include "net/fd_event_group.h"
 
 namespace rapidrpc {
 
@@ -29,9 +30,9 @@ void TcpServer::init() {
     // TODO: 读取配置文件和配置类
     m_io_thread_group = new IOThreadGroup(2);
 
-    // FdEvent listen_fd_event(m_acceptor->getListenFd());
-    m_listen_fd_event = new FdEvent(m_acceptor->getListenFd());
-    m_listen_fd_event->setNonBlocking(); // set non-blocking
+    m_listen_fd_event = FdEventGroup::GetGlobalFdEventGroup()->getFdEvent(m_acceptor->getListenFd());
+    // ! set non-blocking
+    m_listen_fd_event->setNonBlocking();
     m_listen_fd_event->listen(TriggerEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
     // add listen_fd_event to mainReactor
     m_main_event_loop->addEpollEvent(m_listen_fd_event);
@@ -56,7 +57,9 @@ void TcpServer::onAccept() {
     }
     // add conn(client_fd) to IOThread
     IOThread *io_thread = m_io_thread_group->getIOThread(); // get next IOThread
-    TcpConnection::s_ptr conn = std::make_shared<TcpConnection>(io_thread, client_fd, 1024, client_addr);
+    TcpConnection::s_ptr conn =
+        std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 1024, client_addr);
+    conn->setState(TcpState::Connected);
     // ! set callback
     conn->setRemoveConnCb(std::bind(&TcpServer::removeConnection, this, TcpConnection::w_ptr(conn)));
     // add connection to set and increase client counts
@@ -80,7 +83,7 @@ void TcpServer::removeConnection(TcpConnection::w_ptr conn) {
     std::lock_guard<std::mutex> lock(m_mutex);
     int rt = m_connections.erase(tmp_ptr);
     m_client_counts--;
-    DEBUGLOG("TcpServer remove [%d] connection, client counts: %d", rt, m_client_counts);
+    DEBUGLOG("TcpServer remove %d connection, client counts: %d", rt, m_client_counts);
 }
 
 } // namespace rapidrpc
