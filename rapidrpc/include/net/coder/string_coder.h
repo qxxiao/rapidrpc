@@ -1,8 +1,12 @@
-#ifndef RAPID_NET_STRING_CODER_H
-#define RAPID_NET_STRING_CODER_H
+/**
+ * A simple test protocol and coder for string message
+ */
 
-#include "net/abstract_coder.h"
-#include "net/abstract_protocol.h"
+#ifndef RAPIDRPC_NET_STRING_CODER_H
+#define RAPIDRPC_NET_STRING_CODER_H
+
+#include "net/coder/abstract_coder.h"
+#include "net/coder/abstract_protocol.h"
 
 #include <vector>
 
@@ -42,10 +46,10 @@ public:
         in_buffer->readFromBuffer(str, str.capacity());
         std::string s(str.begin(), str.end());
         auto msg = std::make_shared<StringProtocol>(s);
-        msg->setReqId("12345");
+        msg->m_req_id = "12345";
         out_messages.push_back(msg);
     }
 };
 } // namespace rapidrpc
 
-#endif // !RAPID_NET_STRING_CODER_H
+#endif // !RAPIDRPC_NET_STRING_CODER_H

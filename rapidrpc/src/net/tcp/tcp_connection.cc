@@ -9,7 +9,8 @@
 #include "net/tcp/tcp_connection.h"
 #include "net/fd_event_group.h"
 #include "common/log.h"
-#include "net/string_coder.h"
+#include "net/coder/string_coder.h"
+#include "net/coder/tinypb_coder.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -29,7 +30,8 @@ TcpConnection::TcpConnection(EventLoop *event_loop, int fd, int buffer_size, Net
     m_fd_event = FdEventGroup::GetGlobalFdEventGroup()->getFdEvent(fd);
     m_fd_event->setNonBlocking();
 
-    m_coder = std::make_shared<StringCoder>();
+    // m_coder = std::make_shared<StringCoder>();
+    m_coder = std::make_shared<TinyPBCoder>();
 
     // 设置读事件回调函数并添加到 epoll 中（TcpConnectionByServer）
     if (m_conn_type == TcpConnectionType::TcpConnectionByServer) {
@@ -99,34 +101,36 @@ void TcpConnection::onRead() {
 }
 
 // * 执行请求
-// ! 第一次有数据写入时，重新添加到 epoll 中，监听可写事件
+// ! 服务端读取后，有数据写入时，重新添加到 epoll 中，监听可写事件
 // ！ 并且在发送完后，清除写入事件，避免可写事件一直被触发
 void TcpConnection::execute() {
     if (m_conn_type == TcpConnectionType::TcpConnectionByServer) {
         // 服务端连接
-        // TODO: 读取请求，应该需要判断完整的请求，然后执行
-        int len = m_in_buffer->readAvailable();
-        std::vector<char> data(len);
-        m_in_buffer->readFromBuffer(data, len);
+        std::vector<AbstractProtocol::s_ptr> messages;
+        m_coder->decode(messages, m_in_buffer);
 
-        std::string msg(data.begin(), data.end());
+        if (messages.empty()) {
+            return;
+        }
 
-        // TODO: 解析请求
-        INFOLOG("success get request from client[%s], request[%s]", m_peer_addr->toString().c_str(), msg.c_str());
+        for (size_t i = 0; i < messages.size(); i++) {
 
-        m_out_buffer->writeToBuffer(msg.data(), msg.size());
-
+            TinyPBProtocol::s_ptr msg = std::dynamic_pointer_cast<TinyPBProtocol>(messages[i]);
+            msg->setErrCodeAndInfo(0, "success");
+            msg->setPbData("hello, world");
+            msg->complete();
+        }
+        m_coder->encode(messages, m_out_buffer);
         listenWriteEvent();
     }
     else {
         // 客户端连接
-        // * 从 buffer 中读取一条完整的消息，并执行其回调函数
-        // TODO: 解析1条完整的消息
+        // * 从 buffer 尽可能解析出完整的消息(可能为0)，并执行其回调函数
         std::vector<AbstractProtocol::s_ptr> messages;
         m_coder->decode(messages, m_in_buffer);
-        // 假设解析出来了多条消息
+        // 处理解析出的消息，调用其回调函数
         for (size_t i = 0; i < messages.size(); i++) {
-            std::string req_id = messages[i]->getReqId();
+            std::string req_id = messages[i]->m_req_id;
             auto it = m_read_cb.find(req_id);
             if (it != m_read_cb.end()) {
                 it->second(messages[i]);

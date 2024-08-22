@@ -6,8 +6,9 @@
 #include "common/log.h"
 #include "common/config.h"
 #include "net/tcp/tcp_client.h"
-#include "net/abstract_protocol.h"
-#include "net/string_coder.h" // string protocol
+#include "net/coder/abstract_protocol.h"
+// #include "net/coder/string_coder.h" // string protocol
+#include "net/coder/tinypb_protocol.h"
 #include <unistd.h>
 
 int main() {
@@ -22,16 +23,17 @@ int main() {
     client.connect([&client]() {
         DEBUGLOG("Connect to server success");
 
-        rapidrpc::AbstractProtocol::s_ptr message = std::make_shared<rapidrpc::StringProtocol>("Hello, server");
-        message->setReqId("12345");
-        client.writeMessage(message, [](rapidrpc::AbstractProtocol::s_ptr message) {
-            DEBUGLOG("Write message success:%s",
-                     std::dynamic_pointer_cast<rapidrpc::StringProtocol>(message)->getStr().c_str());
+        auto msg = std::make_shared<rapidrpc::TinyPBProtocol>();
+        msg->setReqId("12345").setMethodName("test").setPbData("hello").complete();
+
+        client.writeMessage(msg, [](rapidrpc::AbstractProtocol::s_ptr message) {
+            DEBUGLOG("Write message success: \n%s",
+                     std::dynamic_pointer_cast<rapidrpc::TinyPBProtocol>(message)->toString().c_str());
         });
 
         client.readMessage("12345", [](rapidrpc::AbstractProtocol::s_ptr message) {
-            DEBUGLOG("Read message success:%s",
-                     std::dynamic_pointer_cast<rapidrpc::StringProtocol>(message)->getStr().c_str());
+            DEBUGLOG("Read message success:\n%s",
+                     std::dynamic_pointer_cast<rapidrpc::TinyPBProtocol>(message)->toString().c_str());
         });
     });
 

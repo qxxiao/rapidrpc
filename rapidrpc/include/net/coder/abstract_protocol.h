@@ -9,7 +9,7 @@
 namespace rapidrpc {
 
 // AbstractProtocol is the base class for all protocols
-// 数据包的基类
+// 数据包协议的基类
 class AbstractProtocol {
 public:
     using s_ptr = std::shared_ptr<AbstractProtocol>;
@@ -17,15 +17,12 @@ public:
 public:
     AbstractProtocol() = default;
     virtual ~AbstractProtocol() = default;
-
-    std::string getReqId() const {
-        return m_req_id;
-    }
-    void setReqId(const std::string &req_id) {
-        m_req_id = req_id;
+    virtual std::string toString() const {
+        // json format with fields
+        return std::string("{\n") + "\tm_req_id: \"" + m_req_id + "\"\n}";
     }
 
-protected:
+public:
     std::string m_req_id; // request id/response id
 };
 } // namespace rapidrpc

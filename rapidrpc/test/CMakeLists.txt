@@ -4,9 +4,9 @@ FILE(GLOB test_eventloop_src_files  ${project_dir}/src/common/*.cc ${project_dir
 FILE(GLOB test_eventloop_timer_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_io_thread_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_io_thread_group_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
-FILE(GLOB test_net_addr_src_files  ${project_dir}/src/common/*.cc  ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc)
-FILE(GLOB test_tcpserver_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc)
-FILE(GLOB test_tcpclient_src_files ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc)
+FILE(GLOB test_net_addr_src_files  ${project_dir}/src/common/*.cc  ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc ${project_dir}/src/net/coder/*.cc)
+FILE(GLOB test_tcpserver_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc ${project_dir}/src/net/coder/*.cc)
+FILE(GLOB test_tcpclient_src_files ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc ${project_dir}/src/net/tcp/*.cc ${project_dir}/src/net/coder/*.cc)
 
 
 add_executable(test_log ${CMAKE_CURRENT_SOURCE_DIR}/test_log.cc ${test_log_src_files})

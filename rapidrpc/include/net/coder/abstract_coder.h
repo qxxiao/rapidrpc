@@ -2,7 +2,7 @@
 #define RAPID_NET_ABSTRACT_CODER_H
 
 #include "net/tcp/tcp_buffer.h"
-#include "net/abstract_protocol.h"
+#include "net/coder/abstract_protocol.h"
 
 #include <vector>
 #include <memory>
@@ -20,6 +20,8 @@ public:
     // decode the in_buffer to the out_messages
     virtual void decode(std::vector<AbstractProtocol::s_ptr> &out_messages,
                         TcpBuffer::s_ptr in_buffer) = 0; // decode the message
+
+    virtual ~AbstractCoder() = default;
 };
 
 } // namespace rapidrpc

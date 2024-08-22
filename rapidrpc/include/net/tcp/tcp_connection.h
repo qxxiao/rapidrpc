@@ -4,8 +4,8 @@
 #include "net/tcp/net_addr.h"
 #include "net/tcp/tcp_buffer.h"
 #include "net/io_thread.h"
-#include "net/abstract_protocol.h"
-#include "net/abstract_coder.h"
+#include "net/coder/abstract_protocol.h"
+#include "net/coder/abstract_coder.h"
 
 #include <vector>
 #include <map>
