@@ -101,26 +101,24 @@ void TcpConnection::onRead() {
 }
 
 // * 执行请求
-// ! 服务端读取后，有数据写入时，重新添加到 epoll 中，监听可写事件
-// ！ 并且在发送完后，清除写入事件，避免可写事件一直被触发
 void TcpConnection::execute() {
     if (m_conn_type == TcpConnectionType::TcpConnectionByServer) {
-        // 服务端连接
-        std::vector<AbstractProtocol::s_ptr> messages;
-        m_coder->decode(messages, m_in_buffer);
+        // 服务端连接, 读取并解析请求后，将响应数据写入发送缓冲区，重新添加到 epoll 中，监听可写事件
+        // 并且在发送完后，清除写入事件，避免可写事件一直被触发
+        std::vector<AbstractProtocol::s_ptr> requests;
+        std::vector<AbstractProtocol::s_ptr> responses;
+        m_coder->decode(requests, m_in_buffer);
 
-        if (messages.empty()) {
+        if (requests.empty()) {
             return;
         }
 
-        for (size_t i = 0; i < messages.size(); i++) {
-
-            TinyPBProtocol::s_ptr msg = std::dynamic_pointer_cast<TinyPBProtocol>(messages[i]);
-            msg->setErrCodeAndInfo(0, "success");
-            msg->setPbData("hello, world");
-            msg->complete();
+        for (size_t i = 0; i < requests.size(); i++) {
+            TinyPBProtocol::s_ptr response = std::make_shared<TinyPBProtocol>();
+            Dispatcher::GetDispatcher()->dispatch(requests[i], response);
+            responses.push_back(response);
         }
-        m_coder->encode(messages, m_out_buffer);
+        m_coder->encode(responses, m_out_buffer);
         listenWriteEvent();
     }
     else {
@@ -141,8 +139,6 @@ void TcpConnection::execute() {
 }
 
 void TcpConnection::onWrite() {
-    INFOLOG("call TcpConnection::onWrite on fd[%d]", m_fd_event->getFd());
-
     if (m_state != TcpState::Connected) {
         ERRORLOG("TcpConnection::onWrite, state is not connected, addr[%s], clientfd[%d]",
                  m_peer_addr->toString().c_str(), m_fd_event->getFd());
@@ -252,4 +248,11 @@ void TcpConnection::addReadCb(const std::string &req_id, std::function<void(Abst
     m_read_cb[req_id] = read_cb;
 }
 
+NetAddr::s_ptr TcpConnection::getLocalAddr() const {
+    return m_local_addr;
+}
+
+NetAddr::s_ptr TcpConnection::getPeerAddr() const {
+    return m_peer_addr;
+}
 } // namespace rapidrpc

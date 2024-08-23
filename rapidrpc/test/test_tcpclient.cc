@@ -27,12 +27,12 @@ int main() {
         msg->setReqId("12345").setMethodName("test").setPbData("hello").complete();
 
         client.writeMessage(msg, [](rapidrpc::AbstractProtocol::s_ptr message) {
-            DEBUGLOG("Write message success: \n%s",
+            DEBUGLOG("Write message success: [%s]",
                      std::dynamic_pointer_cast<rapidrpc::TinyPBProtocol>(message)->toString().c_str());
         });
 
         client.readMessage("12345", [](rapidrpc::AbstractProtocol::s_ptr message) {
-            DEBUGLOG("Read message success:\n%s",
+            DEBUGLOG("Read message success:[%s]",
                      std::dynamic_pointer_cast<rapidrpc::TinyPBProtocol>(message)->toString().c_str());
         });
     });

@@ -2,6 +2,7 @@
 #define RAPIDRPC_NET_CODER_TINYPB_PROTOCOL_H
 
 #include "net/coder/abstract_protocol.h"
+#include "common/error_code.h"
 
 #include <string>
 
@@ -30,8 +31,8 @@ public:
         return *this;
     }
     // set err_code and err_info
-    TinyPBProtocol &setErrCodeAndInfo(int32_t err_code, const std::string &err_info) {
-        m_err_code = err_code;
+    TinyPBProtocol &setErrCodeAndInfo(Error err, const std::string &err_info) {
+        m_err_code = static_cast<int32_t>(err);
         m_err_info = err_info;
         m_err_info_len = m_err_info.size();
         return *this;
@@ -49,9 +50,8 @@ public:
     }
 
     std::string toString() const override {
-        return std::string("{\n") + "\tm_req_id: \"" + m_req_id + "\",\n" + "\tm_method_name: \"" + m_method_name
-               + "\",\n" + "\tm_err_code: " + std::to_string(m_err_code) + ",\n" + "\tm_err_info: \"" + m_err_info
-               + "\"\n}";
+        return "m_req_id: \"" + m_req_id + "\", m_method_name: \"" + m_method_name
+               + "\", m_err_code: " + std::to_string(m_err_code) + ", m_err_info: \"" + m_err_info + "\"";
     }
 
 public:

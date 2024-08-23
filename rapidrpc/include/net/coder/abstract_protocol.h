@@ -19,7 +19,7 @@ public:
     virtual ~AbstractProtocol() = default;
     virtual std::string toString() const {
         // json format with fields
-        return std::string("{\n") + "\tm_req_id: \"" + m_req_id + "\"\n}";
+        return "m_req_id: \"" + m_req_id + "\"";
     }
 
 public:

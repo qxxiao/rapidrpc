@@ -106,7 +106,8 @@ void TinyPBCoder::decode(std::vector<AbstractProtocol::s_ptr> &out_messages, Tcp
             ERRORLOG("TinyPBCoder decode error, checksum error");
             continue;
         }
-        DEBUGLOG("TinyPBCoder decode success, message: \n%s", message->toString().c_str());
+        DEBUGLOG("TinyPBCoder decode success, message: req_id=[%s], method_name=[%s]", message->m_req_id.c_str(),
+                 message->m_method_name.c_str());
         out_messages.push_back(message);
     }
 }

@@ -6,6 +6,7 @@
 #include "net/io_thread.h"
 #include "net/coder/abstract_protocol.h"
 #include "net/coder/abstract_coder.h"
+#include "net/rpc/dispatcher.h"
 
 #include <vector>
 #include <map>
@@ -60,6 +61,9 @@ public:
     void addMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> write_cb);
     // client conn: 添加请求 id 和回调函数到 m_read_cb 哈希表中，等待下次写读事件发生时读取并执行回调函数
     void addReadCb(const std::string &req_id, std::function<void(AbstractProtocol::s_ptr)> read_cb);
+
+    NetAddr::s_ptr getLocalAddr() const;
+    NetAddr::s_ptr getPeerAddr() const;
 
 private:
     NetAddr::s_ptr m_local_addr;
