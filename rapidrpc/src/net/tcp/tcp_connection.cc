@@ -128,8 +128,8 @@ void TcpConnection::execute() {
         m_coder->decode(messages, m_in_buffer);
         // 处理解析出的消息，调用其回调函数
         for (size_t i = 0; i < messages.size(); i++) {
-            std::string req_id = messages[i]->m_req_id;
-            auto it = m_read_cb.find(req_id);
+            std::string msg_id = messages[i]->m_msg_id;
+            auto it = m_read_cb.find(msg_id);
             if (it != m_read_cb.end()) {
                 it->second(messages[i]);
                 m_read_cb.erase(it);
@@ -244,8 +244,8 @@ void TcpConnection::addMessage(AbstractProtocol::s_ptr message, std::function<vo
     m_write_cb.emplace_back(message, write_cb);
 }
 
-void TcpConnection::addReadCb(const std::string &req_id, std::function<void(AbstractProtocol::s_ptr)> read_cb) {
-    m_read_cb[req_id] = read_cb;
+void TcpConnection::addReadCb(const std::string &msg_id, std::function<void(AbstractProtocol::s_ptr)> read_cb) {
+    m_read_cb[msg_id] = read_cb;
 }
 
 NetAddr::s_ptr TcpConnection::getLocalAddr() const {

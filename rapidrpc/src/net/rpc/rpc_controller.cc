@@ -5,7 +5,7 @@ namespace rapidrpc {
 void RpcController::Reset() {
     m_error_code = 0;
     m_error_info.clear();
-    m_req_id.clear();
+    m_msg_id.clear();
 
     m_is_failed = false;
     m_is_canceled = false;
@@ -40,8 +40,13 @@ bool RpcController::IsCanceled() const {
 void RpcController::NotifyOnCancel(google::protobuf::Closure *callback) {}
 
 // self defined
-void RpcController::SetError(int32_t error_code, const std::string error_info) {
-    m_error_code = error_code;
+void RpcController::SetError(Error err, const std::string error_info) {
+    m_error_code = static_cast<int32_t>(err);
+    m_error_info = error_info;
+    m_is_failed = true;
+}
+void RpcController::SetError(int32_t err, const std::string error_info) {
+    m_error_code = err;
     m_error_info = error_info;
     m_is_failed = true;
 }
@@ -52,11 +57,11 @@ std::string RpcController::GetErrorInfo() const {
     return m_error_info;
 }
 
-void RpcController::SetReqId(const std::string &req_id) {
-    m_req_id = req_id;
+void RpcController::SetMsgId(const std::string &msg_id) {
+    m_msg_id = msg_id;
 }
-std::string RpcController::GetReqId() const {
-    return m_req_id;
+std::string RpcController::GetMsgId() const {
+    return m_msg_id;
 }
 
 void RpcController::SetLocalAddr(NetAddr::s_ptr addr) {

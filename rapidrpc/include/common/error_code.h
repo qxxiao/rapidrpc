@@ -26,6 +26,8 @@ enum class Error {
     SYS_METHOD_NOT_FOUND = SYS_ERROR_PREFIX(0009),  // 方法未找到
 
     SYS_FAILED_PARSE_SERVICE_NAME = SYS_ERROR_PREFIX(0010), // 解析服务名失败
+
+    SYS_CHANNEL_NOT_INIT = SYS_ERROR_PREFIX(0011), // channel 未初始化
 };
 }
 

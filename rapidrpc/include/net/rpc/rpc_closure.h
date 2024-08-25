@@ -12,6 +12,8 @@ namespace rapidrpc {
 
 class RpcClosure: public google::protobuf::Closure {
 public:
+    RpcClosure(std::function<void()> callback) : m_callback(callback) {}
+
     void Run() override {
         if (m_callback) {
             m_callback();

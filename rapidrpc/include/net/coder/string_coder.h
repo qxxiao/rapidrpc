@@ -46,7 +46,7 @@ public:
         in_buffer->readFromBuffer(str, str.capacity());
         std::string s(str.begin(), str.end());
         auto msg = std::make_shared<StringProtocol>(s);
-        msg->m_req_id = "12345";
+        msg->m_msg_id = "12345";
         out_messages.push_back(msg);
     }
 };

@@ -19,11 +19,11 @@ public:
     virtual ~AbstractProtocol() = default;
     virtual std::string toString() const {
         // json format with fields
-        return "m_req_id: \"" + m_req_id + "\"";
+        return "m_msg_id: \"" + m_msg_id + "\"";
     }
 
 public:
-    std::string m_req_id; // request id/response id
+    std::string m_msg_id; // request id/response id
 };
 } // namespace rapidrpc
 

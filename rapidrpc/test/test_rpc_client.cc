@@ -8,10 +8,13 @@
 #include "net/tcp/tcp_client.h"
 #include "net/coder/abstract_protocol.h"
 #include "net/coder/tinypb_protocol.h"
+#include "net/rpc/rpc_channel.h"
+#include "net/rpc/rpc_controller.h"
+#include "net/rpc/rpc_closure.h"
 #include "order.pb.h"
 #include <unistd.h>
 
-int main() {
+void test1() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
@@ -28,7 +31,7 @@ int main() {
         DEBUGLOG("Connect to server success");
 
         auto msg = std::make_shared<rapidrpc::TinyPBProtocol>();
-        msg->setReqId("12345").setMethodName("Order.makeOrder").setPbData(request.SerializeAsString()).complete();
+        msg->setMsgId("12345").setMethodName("Order.makeOrder").setPbData(request.SerializeAsString()).complete();
 
         client.writeMessage(msg, [request](rapidrpc::AbstractProtocol::s_ptr message) {
             auto msg = std::dynamic_pointer_cast<rapidrpc::TinyPBProtocol>(message);
@@ -45,7 +48,35 @@ int main() {
             DEBUGLOG("Read response success: [%s]", response.ShortDebugString().c_str());
         });
     });
+}
 
-    sleep(10);
-    return 0;
+void test() {
+    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+
+    // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
+    rapidrpc::NetAddr::s_ptr serverAddr = std::make_shared<rapidrpc::IpNetAddr>("198.19.249.138:12345");
+
+    // channel, shared_ptr, error if raw pointer not managed by shared_ptr
+    rapidrpc::RpcChannel::s_ptr channel = std::make_shared<rapidrpc::RpcChannel>(serverAddr);
+
+    // controller, request, response, done
+    auto controller = std::make_shared<rapidrpc::RpcController>();
+    auto request = std::make_shared<makeOrderRequest>();
+    auto response = std::make_shared<makeOrderResponse>();
+    rapidrpc::RpcChannel::closure_s_ptr done = std::make_shared<rapidrpc::RpcClosure>([]() {
+        INFOLOG("RpcClosure done");
+    });
+
+    // set request
+    request->set_price(100);
+    request->set_goods("apple");
+
+    // init channel
+    channel->Init(controller, request, response, done);
+    Order_Stub stub(channel.get());
+    stub.makeOrder(controller.get(), request.get(), response.get(), done.get());
+}
+
+int main() {
+    test();
 }

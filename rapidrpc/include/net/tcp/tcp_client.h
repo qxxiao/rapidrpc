@@ -10,6 +10,9 @@ namespace rapidrpc {
 
 class TcpClient {
 public:
+    using s_ptr = std::shared_ptr<TcpClient>;
+
+public:
     TcpClient(NetAddr::s_ptr peer_addr);
     ~TcpClient();
 
@@ -20,7 +23,10 @@ public:
     void writeMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> write_cb);
 
     // 异步的读取数据
-    void readMessage(const std::string &req_id, std::function<void(AbstractProtocol::s_ptr)> read_cb);
+    void readMessage(const std::string &msg_id, std::function<void(AbstractProtocol::s_ptr)> read_cb);
+
+    // 关闭 EventLoop,关闭所有连接
+    void close();
 
 private:
     NetAddr::s_ptr m_peer_addr;       // 远程地址

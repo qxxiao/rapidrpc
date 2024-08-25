@@ -18,10 +18,10 @@ public:
 
     virtual ~TinyPBProtocol() = default;
 
-    // set req_id
-    TinyPBProtocol &setReqId(const std::string &req_id) {
-        m_req_id = req_id;
-        m_req_id_len = m_req_id.size();
+    // set msg_id
+    TinyPBProtocol &setMsgId(const std::string &msg_id) {
+        m_msg_id = msg_id;
+        m_msg_id_len = m_msg_id.size();
         return *this;
     }
     // set method_name
@@ -44,20 +44,20 @@ public:
     }
     // compute pk_len
     TinyPBProtocol &complete() {
-        m_pk_len = 2 * sizeof(char) + 6 * sizeof(int32_t) + m_req_id.size() + m_method_name.size() + m_err_info.size()
+        m_pk_len = 2 * sizeof(char) + 6 * sizeof(int32_t) + m_msg_id.size() + m_method_name.size() + m_err_info.size()
                    + m_pb_data.size();
         return *this;
     }
 
     std::string toString() const override {
-        return "m_req_id: \"" + m_req_id + "\", m_method_name: \"" + m_method_name
+        return "m_msg_id: \"" + m_msg_id + "\", m_method_name: \"" + m_method_name
                + "\", m_err_code: " + std::to_string(m_err_code) + ", m_err_info: \"" + m_err_info + "\"";
     }
 
 public:
     int32_t m_pk_len{0};
-    int32_t m_req_id_len{0};
-    // req_id 继承自父类
+    int32_t m_msg_id_len{0};
+    // msg_id 继承自父类
 
     int32_t m_method_name_len{0}; // 方法名长度
     std::string m_method_name;    // 方法名

@@ -37,12 +37,12 @@ void Dispatcher::registerService(service_s_ptr service) {
 void Dispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::s_ptr response) {
     TinyPBProtocol::s_ptr req = std::dynamic_pointer_cast<TinyPBProtocol>(request);
     TinyPBProtocol::s_ptr resp = std::dynamic_pointer_cast<TinyPBProtocol>(response);
-    resp->setReqId(req->m_req_id).setMethodName(req->m_method_name); // set req_id and method_name for response
+    resp->setMsgId(req->m_msg_id).setMethodName(req->m_method_name); // set msg_id and method_name for response
 
     // get service name and method name
     std::string service_name, method_name;
     if (!parseServiceAndMethod(req->m_method_name, service_name, method_name)) {
-        ERRORLOG("Dispatcher::dispatch: req_id=[%s], invalid full_name: [%s]", req->m_req_id.c_str(),
+        ERRORLOG("Dispatcher::dispatch: msg_id=[%s], invalid full_name: [%s]", req->m_msg_id.c_str(),
                  req->m_method_name.c_str());
         resp->setErrCodeAndInfo(Error::SYS_FAILED_PARSE_SERVICE_NAME, "invalid method name").complete();
         return;
@@ -50,7 +50,7 @@ void Dispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::s_p
     // get service object and method object
     auto service_iter = m_services.find(service_name);
     if (service_iter == m_services.end()) {
-        ERRORLOG("Dispatcher::dispatch: req_id=[%s], service [%s] not found", req->m_req_id.c_str(),
+        ERRORLOG("Dispatcher::dispatch: msg_id=[%s], service [%s] not found", req->m_msg_id.c_str(),
                  service_name.c_str());
         resp->setErrCodeAndInfo(Error::SYS_SERVICE_NOT_FOUND, "service not found").complete();
         return;
@@ -61,7 +61,7 @@ void Dispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::s_p
     const google::protobuf::ServiceDescriptor *service_desc = service->GetDescriptor();
     const google::protobuf::MethodDescriptor *method_desc = service_desc->FindMethodByName(method_name);
     if (method_desc == nullptr) {
-        ERRORLOG("Dispatcher::dispatch: req_id=[%s], method [%s] not found in service [%s]", req->m_req_id.c_str(),
+        ERRORLOG("Dispatcher::dispatch: msg_id=[%s], method [%s] not found in service [%s]", req->m_msg_id.c_str(),
                  method_name.c_str(), service_name.c_str());
         resp->setErrCodeAndInfo(Error::SYS_METHOD_NOT_FOUND, "method not found").complete();
         return;
@@ -72,36 +72,36 @@ void Dispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::s_p
     google::protobuf::Message *func_resp = service->GetResponsePrototype(method_desc).New();
     // parse request
     if (!func_req->ParseFromString(req->m_pb_data)) {
-        ERRORLOG("Dispatcher::dispatch: req_id=[%s], deserialize request failed", req->m_req_id.c_str());
+        ERRORLOG("Dispatcher::dispatch: msg_id=[%s], deserialize request failed", req->m_msg_id.c_str());
         resp->setErrCodeAndInfo(Error::SYS_FAILED_DESERIALIZE, "deserialize request failed").complete();
         delete func_req;
         delete func_resp;
         return;
     }
     // TODO: check shortdebug info
-    INFOLOG("Dispatcher::dispatch get rpc request: req_id=[%s], service [%s], method [%s], rpc request[%s]",
-            req->m_req_id.c_str(), service_name.c_str(), method_name.c_str(), func_req->ShortDebugString().c_str());
+    INFOLOG("Dispatcher::dispatch get rpc request: msg_id=[%s], service [%s], method [%s], rpc request[%s]",
+            req->m_msg_id.c_str(), service_name.c_str(), method_name.c_str(), func_req->ShortDebugString().c_str());
     // ! call method
     // TODO: rpc controller
     RpcController rpcController;
     rpcController.SetLocalAddr(nullptr);
     rpcController.SetPeerAddr(nullptr);
-    rpcController.SetReqId(req->m_req_id);
+    rpcController.SetMsgId(req->m_msg_id);
 
     service->CallMethod(method_desc, &rpcController, func_req, func_resp, nullptr);
 
     // serialize response
     auto pb_data = func_resp->SerializeAsString();
     if (pb_data.empty()) {
-        ERRORLOG("Dispatcher::dispatch: req_id=[%s], serialize response failed", req->m_req_id.c_str());
+        ERRORLOG("Dispatcher::dispatch: msg_id=[%s], serialize response failed", req->m_msg_id.c_str());
         resp->setErrCodeAndInfo(Error::SYS_FAILED_SERIALIZE, "serialize response failed").complete();
         delete func_req;
         delete func_resp;
         return;
     }
     resp->setErrCodeAndInfo(Error::OK, "success").setPbData(pb_data).complete();
-    INFOLOG("Dispatcher::dispatch rpc call success: req_id=[%s], service [%s], method [%s], rpc response[%s]",
-            req->m_req_id.c_str(), service_name.c_str(), method_name.c_str(), func_resp->ShortDebugString().c_str());
+    INFOLOG("Dispatcher::dispatch rpc call success: msg_id=[%s], service [%s], method [%s], rpc response[%s]",
+            req->m_msg_id.c_str(), service_name.c_str(), method_name.c_str(), func_resp->ShortDebugString().c_str());
     delete func_req;
     delete func_resp;
 }

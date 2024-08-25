@@ -51,18 +51,18 @@ void TinyPBCoder::decode(std::vector<AbstractProtocol::s_ptr> &out_messages, Tcp
         message->m_pk_len = pk_len;
         read_index += sizeof(char) + sizeof(int32_t); // +5
 
-        // ! read req_id_len and req_id
+        // ! read msg_id_len and msg_id
         if (!checkIndexValid(read_index, sizeof(int32_t), pk_len)) {
             continue;
         }
-        message->m_req_id_len = ntohl(*(int *)(&tmp[read_index]));
+        message->m_msg_id_len = ntohl(*(int *)(&tmp[read_index]));
         read_index += sizeof(int32_t);
 
-        if (!checkIndexValid(read_index, message->m_req_id_len, pk_len)) {
+        if (!checkIndexValid(read_index, message->m_msg_id_len, pk_len)) {
             continue;
         }
-        message->m_req_id = std::string(tmp.begin() + read_index, tmp.begin() + read_index + message->m_req_id_len);
-        read_index += message->m_req_id_len;
+        message->m_msg_id = std::string(tmp.begin() + read_index, tmp.begin() + read_index + message->m_msg_id_len);
+        read_index += message->m_msg_id_len;
 
         // ! read method_len and method_name
         if (!checkIndexValid(read_index, sizeof(int32_t), pk_len)) {
@@ -106,7 +106,7 @@ void TinyPBCoder::decode(std::vector<AbstractProtocol::s_ptr> &out_messages, Tcp
             ERRORLOG("TinyPBCoder decode error, checksum error");
             continue;
         }
-        DEBUGLOG("TinyPBCoder decode success, message: req_id=[%s], method_name=[%s]", message->m_req_id.c_str(),
+        DEBUGLOG("TinyPBCoder decode message success, msg_id=[%s], method_name=[%s]", message->m_msg_id.c_str(),
                  message->m_method_name.c_str());
         out_messages.push_back(message);
     }
@@ -114,12 +114,12 @@ void TinyPBCoder::decode(std::vector<AbstractProtocol::s_ptr> &out_messages, Tcp
 
 std::vector<char> TinyPBCoder::encodeMessage(TinyPBProtocol::s_ptr msg) {
     // TODO: check msg
-    if (msg->m_req_id.empty()) {
-        msg->m_req_id = "123456";
+    if (msg->m_msg_id.empty()) {
+        msg->m_msg_id = "123456";
     }
 
     // cal pk_len
-    int pk_len = 2 * sizeof(char) + 6 * sizeof(int32_t) + msg->m_req_id.size() + msg->m_method_name.size()
+    int pk_len = 2 * sizeof(char) + 6 * sizeof(int32_t) + msg->m_msg_id.size() + msg->m_method_name.size()
                  + msg->m_err_info.size() + msg->m_pb_data.size();
     std::vector<char> ret;
     ret.reserve(pk_len);
@@ -128,10 +128,10 @@ std::vector<char> TinyPBCoder::encodeMessage(TinyPBProtocol::s_ptr msg) {
     pk_len = htonl(msg->m_pk_len = pk_len);
     ret.insert(ret.end(), (char *)&pk_len, (char *)&pk_len + sizeof(int32_t));
 
-    // ! encode req_id_len and req_id
-    int req_id_len = htonl(msg->m_req_id_len = msg->m_req_id.size());
-    ret.insert(ret.end(), (char *)&req_id_len, (char *)&req_id_len + sizeof(int32_t));
-    ret.insert(ret.end(), msg->m_req_id.begin(), msg->m_req_id.end());
+    // ! encode msg_id_len and msg_id
+    int msg_id_len = htonl(msg->m_msg_id_len = msg->m_msg_id.size());
+    ret.insert(ret.end(), (char *)&msg_id_len, (char *)&msg_id_len + sizeof(int32_t));
+    ret.insert(ret.end(), msg->m_msg_id.begin(), msg->m_msg_id.end());
 
     // ! encode method_len and method_name
     int method_len = htonl(msg->m_method_name_len = msg->m_method_name.size());
@@ -158,7 +158,8 @@ std::vector<char> TinyPBCoder::encodeMessage(TinyPBProtocol::s_ptr msg) {
     // 不需要转换，因为校验时按照4字节异或
     std::memcpy(ret.data() + ret.size() - sizeof(char) - sizeof(int32_t), &checksum, sizeof(int32_t));
 
-    DEBUGLOG("TinyPBCoder encode message success, req_id=%s", msg->m_req_id.c_str());
+    DEBUGLOG("TinyPBCoder encode message success, msg_id=[%s], method_name=[%s]", msg->m_msg_id.c_str(),
+             msg->m_method_name.c_str());
     return ret;
 }
 

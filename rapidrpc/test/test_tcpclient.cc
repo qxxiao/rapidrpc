@@ -24,7 +24,7 @@ int main() {
         DEBUGLOG("Connect to server success");
 
         auto msg = std::make_shared<rapidrpc::TinyPBProtocol>();
-        msg->setReqId("12345").setMethodName("test").setPbData("hello").complete();
+        msg->setMsgId("12345").setMethodName("test").setPbData("hello").complete();
 
         client.writeMessage(msg, [](rapidrpc::AbstractProtocol::s_ptr message) {
             DEBUGLOG("Write message success: [%s]",

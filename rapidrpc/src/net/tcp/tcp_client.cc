@@ -28,11 +28,12 @@ TcpClient::TcpClient(NetAddr::s_ptr peer_addr) : m_peer_addr(peer_addr) {
 }
 
 TcpClient::~TcpClient() {
-    // TODO: close m_fd manually or in TcpConnection destructor
+    // TODO: close m_fd manually in close() function
 
     // if (m_fd > 0) {
     //     m_fd_event->close();
     // }
+    DEBUGLOG("TcpClient::~TcpClient");
 }
 
 // 异步的连接远程地址 connect to peer_addr
@@ -104,12 +105,21 @@ void TcpClient::writeMessage(AbstractProtocol::s_ptr message, std::function<void
 }
 
 // 异步的读取数据
-void TcpClient::readMessage(const std::string &req_id, std::function<void(AbstractProtocol::s_ptr)> read_cb) {
+void TcpClient::readMessage(const std::string &msg_id, std::function<void(AbstractProtocol::s_ptr)> read_cb) {
     // 1. 监听可读事件
     // 2. 读取数据，并解码出 message 对象
 
-    m_connection->addReadCb(req_id, read_cb);
+    m_connection->addReadCb(msg_id, read_cb);
     // TODO: 每次读取后，需要清除读事件吗？
     m_connection->listenReadEvent();
+}
+
+// TODO: 每次rpc调用完毕后，需要关闭连接，当前只能一次rpc调用
+// 在 eventloop 事件回调函数中执行
+void TcpClient::close() {
+    if (m_event_loop->isLooping()) {
+        m_event_loop->stop();
+        m_fd_event->close();
+    }
 }
 } // namespace rapidrpc
