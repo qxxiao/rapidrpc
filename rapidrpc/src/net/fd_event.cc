@@ -44,9 +44,12 @@ std::function<void()> FdEvent::getHandler(TriggerEvent event) {
         // read callback
         return m_read_callback;
     }
-    else {
+    else if (event == TriggerEvent::OUT_EVENT) {
         // write callback
         return m_write_callback;
+    }
+    else {
+        return nullptr;
     }
 }
 void FdEvent::listen(TriggerEvent event, std::function<void()> callback) {

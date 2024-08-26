@@ -17,7 +17,6 @@ RpcChannel::RpcChannel(NetAddr::s_ptr peer_addr) : m_peer_addr(peer_addr) {
 }
 
 RpcChannel::~RpcChannel() {
-    //
     DEBUGLOG("RpcChannel::~RpcChannel");
 }
 
@@ -72,6 +71,19 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     s_ptr channel = shared_from_this(); // shared_ptr, error if raw pointer not managed by shared_ptr
 
     m_client->connect([req, channel]() {
+        // !! check if connect success
+        if (channel->m_client->getConnectErrorCode() != static_cast<int>(Error::OK)) {
+            auto controller = std::dynamic_pointer_cast<RpcController>(channel->m_controller);
+            controller->SetError(channel->m_client->getConnectErrorCode(), channel->m_client->getConnectErrorInfo());
+
+            ERRORLOG("RpcChannel connect failed, error_code=%d, error_info=[%s], peer_addr=[%s]",
+                     channel->m_client->getConnectErrorCode(), channel->m_client->getConnectErrorInfo().c_str(),
+                     channel->m_peer_addr->toString().c_str());
+            if (channel->m_done)
+                channel->m_done->Run();
+            channel->m_client->close();
+            return;
+        }
         // send
         channel->m_client->writeMessage(req, [req, channel](AbstractProtocol::s_ptr msg) {
             // after send to buffer
@@ -92,13 +104,13 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                     controller->SetError(Error::SYS_FAILED_DESERIALIZE, "Deserialize response failed");
                 }
 
-                if (channel->m_done)
-                    channel->m_done->Run();
-                // NOTO: debug log
                 DEBUGLOG(
                     "rpc call success, msg_id=[%s]: error_code=%d, error_info=[%s], method_name=[%s], response=[%s]",
                     resp->m_msg_id.c_str(), resp->m_err_code, resp->m_err_info.c_str(), resp->m_method_name.c_str(),
                     channel->m_response->ShortDebugString().c_str());
+
+                if (channel->m_done)
+                    channel->m_done->Run();
                 channel->m_client->close();
             });
         });

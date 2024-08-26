@@ -68,7 +68,7 @@ private:
     message_s_ptr m_request;
     message_s_ptr m_response;
     closure_s_ptr m_done;
-    bool m_is_init{false}; // check saved
+    bool m_is_init{false}; // check saved controller, request, response, done
 };
 } // namespace rapidrpc
 

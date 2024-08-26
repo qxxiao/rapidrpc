@@ -17,6 +17,7 @@ public:
     ~TcpClient();
 
     // 异步的连接远程地址 connect to peer_addr
+    // 无论连接成功与否，会调用回调函数 conn_cb，上层根据错误码判断是否连接成功
     void connect(std::function<void()> conn_cb);
 
     // 异步的发送数据
@@ -28,14 +29,26 @@ public:
     // 关闭 EventLoop,关闭所有连接
     void close();
 
+    // check if connected
+    int getConnectErrorCode() const;
+    std::string getConnectErrorInfo() const;
+
+    NetAddr::s_ptr getPeerAddr() const;
+    NetAddr::s_ptr getLocalAddr() const;
+    void initLocalAddr();
+
 private:
     NetAddr::s_ptr m_peer_addr;       // 远程地址
+    NetAddr::s_ptr m_local_addr;      // 本地地址
     EventLoop *m_event_loop{nullptr}; // 用于处理连接的 EventLoop
 
     int m_fd{-1};                 // 连接的 socket fd
     FdEvent *m_fd_event{nullptr}; // 连接的事件
 
     TcpConnection::s_ptr m_connection; // 连接对象
+
+    int m_connect_error_code{0};      // 连接错误码
+    std::string m_connect_error_info; // 连接错误信息
 };
 } // namespace rapidrpc
 

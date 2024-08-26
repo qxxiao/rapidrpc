@@ -1,4 +1,5 @@
 #include "common/log.h"
+#include "common/error_code.h"
 #include "net/tcp/tcp_client.h"
 #include "net/fd_event_group.h"
 
@@ -42,46 +43,60 @@ TcpClient::~TcpClient() {
 void TcpClient::connect(std::function<void()> conn_cb) {
 
     int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockAddrLen());
-    if (rt < 0 && errno != EINPROGRESS) {
-        ERRORLOG("TcpClient::connect, connect failed, err[%s]", strerror(errno));
-        return;
-    }
     // rt = 0, connect success || rt < 0, errno == EINPROGRESS, connect in progress
     if (rt == 0) {
         // TODO: 需要加锁吗？
         m_connection->setState(TcpState::Connected);
+        m_connect_error_code = static_cast<int>(Error::OK);
+        initLocalAddr();
         DEBUGLOG("TcpClient::connect, connect [%s] success", m_peer_addr->toString().c_str());
         if (conn_cb) {
             conn_cb();
         }
     }
-    // ! 非阻塞大概率需要通过可写事件回调中判断是否连接成功
+    // ! 非阻塞需要通过可写事件回调中判断是否连接成功
     else { // -1
+        if (errno != EINPROGRESS) {
+            ERRORLOG("TcpClient::connect, connect failed, err[%s]", strerror(errno));
+            this->m_connect_error_code = static_cast<int>(Error::SYS_FAILED_CONNECT);
+            this->m_connect_error_info = strerror(errno);
+            if (conn_cb) {
+                conn_cb();
+            }
+            return;
+        }
         // connect in progress
         // !! 连接前的一次性事件，连接成功或失败后会清除
         m_fd_event->listen(TriggerEvent::OUT_EVENT, [this, conn_cb]() {
-            int error = 0;
-            socklen_t len = sizeof(error);
-            if (getsockopt(m_fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-                ERRORLOG("TcpClient::connect, getsockopt failed, err[%s]", strerror(errno));
+            // check connect error by connect again
+            int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockAddrLen());
+            if ((rt < 0 && errno == EISCONN) || rt == 0) {
+                // 连接成功
+                // TODO: 需要加锁吗？还没有建立连接时，会不会有其他线程访问 m_connection 例如发送数据请求时
+                m_connection->setState(TcpState::Connected);
+                m_connect_error_code = static_cast<int>(Error::OK);
+                initLocalAddr();
+                DEBUGLOG("TcpClient::connect, connect [%s] success", m_peer_addr->toString().c_str());
             }
             else {
-                if (error == 0) {
-                    // TODO: 需要加锁吗？还没有建立连接时，会不会有其他线程访问 m_connection 例如发送数据请求时
-                    m_connection->setState(TcpState::Connected);
-                    DEBUGLOG("TcpClient::connect, connect [%s] success", m_peer_addr->toString().c_str());
-                }
-                else {
-                    ERRORLOG("TcpClient::connect, connect failed, err[%s]", strerror(error));
-                }
+                // 连接失败, connection refused, timeout, etc.
+                if (errno == ECONNREFUSED)
+                    m_connect_error_code = static_cast<int>(Error::SYS_PEER_CLOSED);
+                else
+                    m_connect_error_code = static_cast<int>(Error::SYS_FAILED_CONNECT);
+                m_connect_error_info = strerror(errno);
+                ERRORLOG("TcpClient::connect, connect failed, err[%s]", strerror(errno));
             }
-            // clear OUT_EVENT
-            m_fd_event->clearEvent(TriggerEvent::OUT_EVENT);
-            m_event_loop->addEpollEvent(m_fd_event);
-            // !! 这里必须在清空 OUT_EVENT 事件后再执行回调函数
+
+            // 连接失败直接清除该 fd 监听
+            // 连接成功，也通过 delete 来清除 OUT_EVENT 事件
+            this->m_event_loop->deleteEpollEvent(m_fd_event);
+
+            // !! 连接成功时，需要先清空 OUT_EVENT 事件后再执行回调函数
             // !! 否则会导致回调函数中的写事件无法注册/被上面的覆盖(在回调函数中使用 writeMessage
             // 发送数据时会注册写事件)
-            if (m_connection->getState() == TcpState::Connected && conn_cb) {
+            // 不管连接成功与否，都会调用回调函数
+            if (conn_cb) {
                 conn_cb();
             }
         });
@@ -122,4 +137,35 @@ void TcpClient::close() {
         m_fd_event->close();
     }
 }
+
+int TcpClient::getConnectErrorCode() const {
+    return m_connect_error_code;
+}
+
+std::string TcpClient::getConnectErrorInfo() const {
+    return m_connect_error_info;
+}
+
+NetAddr::s_ptr TcpClient::getPeerAddr() const {
+    return m_peer_addr;
+}
+
+NetAddr::s_ptr TcpClient::getLocalAddr() const {
+    return m_local_addr;
+}
+
+void TcpClient::initLocalAddr() {
+    if (m_connect_error_code != static_cast<int>(Error::OK) || m_connection->getState() != TcpState::Connected) {
+        return;
+    }
+    sockaddr_in addr;
+    socklen_t len = sizeof(addr);
+    int rt = getsockname(m_fd, reinterpret_cast<sockaddr *>(&addr), &len);
+    m_local_addr = std::make_shared<IpNetAddr>(addr);
+    if (rt < 0) {
+        ERRORLOG("TcpClient::initLocalAddr, getsockname failed, err[%s]", strerror(errno));
+        m_local_addr.reset();
+    }
+}
+
 } // namespace rapidrpc

@@ -149,13 +149,17 @@ void EventLoop::loop() {
                              fd_event->getFd());
                 }
                 // 可写事件
-                if (trigger_event.events & EPOLLOUT) {
+                else if (trigger_event.events & EPOLLOUT) {
                     // add task
                     auto tmp = fd_event->getHandler(TriggerEvent::OUT_EVENT);
                     addTask(fd_event->getHandler(TriggerEvent::OUT_EVENT));
                     DEBUGLOG("fd[%d] trigger OUT event", fd_event->getFd());
                 }
-                // wakeup event triggered by m_wakeup_fd readable
+                // 其它事件，例如 EPOLLERR, EPOLLHUP（连接失败会与 EPOLLOUT 同时触发）
+                else {
+                    INFOLOG("fd[%d] trigger other event[%u]", fd_event->getFd(),
+                            static_cast<unsigned int>(trigger_event.events));
+                }
             }
         }
     }
