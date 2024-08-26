@@ -3,6 +3,7 @@
 
 #include "net/tcp/net_addr.h"
 #include "net/tcp/tcp_client.h"
+#include "net/timer_event.h"
 
 #include <google/protobuf/service.h>
 
@@ -58,6 +59,10 @@ public:
         return m_client.get();
     }
 
+    TimerEvent::s_ptr getTimerEvent() const {
+        return m_timer_event;
+    }
+
 private:
     NetAddr::s_ptr m_peer_addr;
     NetAddr::s_ptr m_local_addr;
@@ -69,6 +74,9 @@ private:
     message_s_ptr m_response;
     closure_s_ptr m_done;
     bool m_is_init{false}; // check saved controller, request, response, done
+
+    // timer event for timeout
+    TimerEvent::s_ptr m_timer_event;
 };
 } // namespace rapidrpc
 

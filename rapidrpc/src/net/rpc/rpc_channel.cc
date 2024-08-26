@@ -70,6 +70,21 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     // 2. client connect to server
     s_ptr channel = shared_from_this(); // shared_ptr, error if raw pointer not managed by shared_ptr
 
+    // set timeout task
+    m_timer_event = std::make_shared<TimerEvent>(rpc_controller->GetTimeout(), false, [req, channel]() {
+        // timeout task
+        auto controller = std::dynamic_pointer_cast<RpcController>(channel->m_controller);
+        controller->StartCancel(); // canceled
+        controller->SetError(Error::SYS_RPC_CALL_TIMEOUT,
+                             "rpc call timeout, msg_id=[" + req->m_msg_id + "], " + "method_name=[" + req->m_method_name
+                                 + "] " + "peer_addr=[" + channel->m_peer_addr->toString() + "], " + "timeout=["
+                                 + std::to_string(controller->GetTimeout()) + "ms]");
+        if (channel->m_done)
+            channel->m_done->Run();
+        channel->m_client->close();
+    });
+    m_client->addTimerEvent(m_timer_event); // execute timeout task after timeout and not be canceled
+
     m_client->connect([req, channel]() {
         // !! check if connect success
         if (channel->m_client->getConnectErrorCode() != static_cast<int>(Error::OK)) {
@@ -89,6 +104,14 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
             // after send to buffer
             // regiter callback for read response
             channel->m_client->readMessage(req->m_msg_id, [channel](AbstractProtocol::s_ptr msg) {
+                // check if already canceled
+                if (channel->m_controller->IsCanceled()) {
+                    return;
+                }
+                // 成功读取到 msg 数据包后，取消超时任务
+                // channel->m_client->deleteTimerEvent(channel->m_timer_event);
+                channel->m_timer_event->setCanceled(true); // cancel timeout task, and delete from timer queue
+
                 // after read response tiny pb protocol
                 TinyPBProtocol::s_ptr resp = std::dynamic_pointer_cast<TinyPBProtocol>(msg);
                 auto controller = std::dynamic_pointer_cast<RpcController>(channel->m_controller);

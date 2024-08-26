@@ -5,6 +5,7 @@
 #include "net/eventloop.h"
 #include "net/tcp/tcp_connection.h"
 #include "net/coder/abstract_protocol.h"
+#include "net/timer_event.h"
 
 namespace rapidrpc {
 
@@ -36,6 +37,10 @@ public:
     NetAddr::s_ptr getPeerAddr() const;
     NetAddr::s_ptr getLocalAddr() const;
     void initLocalAddr();
+
+    // rpc timer
+    void addTimerEvent(TimerEvent::s_ptr timer_event);
+    void deleteTimerEvent(TimerEvent::s_ptr timer_event);
 
 private:
     NetAddr::s_ptr m_peer_addr;       // 远程地址

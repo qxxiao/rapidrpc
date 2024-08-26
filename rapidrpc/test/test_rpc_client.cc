@@ -65,10 +65,10 @@ void test() {
     auto response = std::make_shared<makeOrderResponse>();
     rapidrpc::RpcChannel::closure_s_ptr done = std::make_shared<rapidrpc::RpcClosure>([controller, response]() {
         if (controller->Failed()) {
-            ERRORLOG("RpcClosure failed: error_info=[%s]", controller->ErrorText().c_str());
+            ERRORLOG("RpcClosure rpc failed: %s", controller->ErrorText().c_str());
         }
         else {
-            INFOLOG("RpcClosure success: resp=[%s]", response->ShortDebugString().c_str());
+            INFOLOG("RpcClosure rpc success: resp=[%s]", response->ShortDebugString().c_str());
         }
     });
     // init channel
@@ -77,6 +77,7 @@ void test() {
     // set request
     request->set_price(100);
     request->set_goods("apple");
+    controller->SetTimeout(5000);
 
     Order_Stub stub(channel.get());
     stub.makeOrder(controller.get(), request.get(), response.get(), done.get());

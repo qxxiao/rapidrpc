@@ -9,13 +9,16 @@
 #include "order.pb.h"
 
 #include <google/protobuf/service.h>
+#include <unistd.h>
 
 // 服务端实现
 class OrderImpl: public Order {
 public:
     void makeOrder(google::protobuf::RpcController *controller, const ::makeOrderRequest *request,
                    ::makeOrderResponse *response, google::protobuf::Closure *done) {
-
+        DEBUGLOG("server conn start sleeping 10s");
+        sleep(10);
+        DEBUGLOG("server conn end sleeping 10s");
         if (request->price() < 10) {
             response->set_ret_code(-1);
             response->set_res_info("short of money");

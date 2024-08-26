@@ -30,7 +30,10 @@ public:
     void NotifyOnCancel(google::protobuf::Closure *callback) override;
 
     // self defined
+
+    // 设置错误码和错误信息
     void SetError(Error err, const std::string error_info);
+    // 设置错误码和错误信息
     void SetError(int32_t err, const std::string error_info);
     int32_t GetErrorCode() const;
     std::string GetErrorInfo() const;
@@ -44,6 +47,7 @@ public:
     void SetPeerAddr(NetAddr::s_ptr addr);
     NetAddr::s_ptr GetPeerAddr() const;
 
+    // 设置超时时间, 单位 ms; 默认 1000ms
     void SetTimeout(int timeout);
     int GetTimeout() const;
 

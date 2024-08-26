@@ -241,6 +241,11 @@ void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
     m_timer->addTimerEvent(event);
 }
 
+//* 移除定时任务
+void EventLoop::deleteTimerEvent(TimerEvent::s_ptr event) {
+    m_timer->deleteTimerEvent(event);
+}
+
 bool EventLoop::isInLoopThread() {
     return getThreadId() == m_tid; // 判断是否在当前线程(即EventLoop所在的线程)
 }
