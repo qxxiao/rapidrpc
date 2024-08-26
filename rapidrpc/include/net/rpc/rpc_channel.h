@@ -3,9 +3,49 @@
 
 #include "net/tcp/net_addr.h"
 #include "net/tcp/tcp_client.h"
+#include "net/rpc/rpc_controller.h"
 #include "net/timer_event.h"
 
 #include <google/protobuf/service.h>
+#include <memory>
+
+/**
+ * @brief create new Rpc request/response message
+ * @param name shared_ptr variable name
+ * @param msgType requestType or responseType. eg. makeOrderRequest, makeOrderResponse
+ */
+#define NEW_RPC_MESSAGE(name, msgType) std::shared_ptr<msgType> name = std::make_shared<msgType>();
+
+/**
+ * @brief create new Rpc controller
+ * @param controllerName shared_ptr variable name
+ * @note can set timeout(ms) by controllerName->SetTimeout(timeout) or get status by controllerName->Failed()
+ */
+#define NEW_RPC_CONTROLLER(controllerName)                                                                             \
+    std::shared_ptr<rapidrpc::RpcController> controllerName = std::make_shared<rapidrpc::RpcController>();
+
+#define NEW_RPC_CHANNEL(channelName, peerAddrString)                                                                   \
+    std::shared_ptr<rapidrpc::RpcChannel> channelName =                                                                \
+        std::make_shared<rapidrpc::RpcChannel>(std::make_shared<rapidrpc::IpNetAddr>(peerAddrString));
+
+/**
+ * @brief Call remote service micro
+ * @param addr remote service address, eg. "127.0.0.1:12345" or use sockaddr_in directly
+ * @param StubType stubType, eg. Order_Stub
+ * @param methodName service method name, eg. makeOrder
+ * @param controller rapidrpc::RpcController, shared_ptr variable name, use NEW_RPC_CONTROLLER(controller) to create
+ * @param request requestType, shared_ptr variable name, use NEW_RPC_REQUEST(request, requestType) to create
+ * @param response responseType, shared_ptr variable name, use NEW_RPC_RESPONSE(response, responseType) to create
+ * @param done rapidrpc::RpcClosure, shared_ptr variable name, use std::make_shared<rapidrpc::RpcClosure>([controller,
+ * response](){...}) to create
+ */
+#define CALL_RPC(addr, StubType, methodName, controller, request, response, done)                                      \
+    {                                                                                                                  \
+        NEW_RPC_CHANNEL(channel, addr);                                                                                \
+        channel->Init(controller, request, response, done);                                                            \
+        StubType stub(channel.get());                                                                                  \
+        stub.methodName(controller.get(), request.get(), response.get(), done.get());                                  \
+    }
 
 namespace rapidrpc {
 

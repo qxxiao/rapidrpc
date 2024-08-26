@@ -12,7 +12,9 @@
 #include "net/rpc/rpc_controller.h"
 #include "net/rpc/rpc_closure.h"
 #include "order.pb.h"
+
 #include <unistd.h>
+#include <memory>
 
 void test1() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
@@ -50,7 +52,7 @@ void test1() {
     });
 }
 
-void test() {
+void test2() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
@@ -81,6 +83,30 @@ void test() {
 
     Order_Stub stub(channel.get());
     stub.makeOrder(controller.get(), request.get(), response.get(), done.get());
+}
+
+void test() {
+    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+
+    NEW_RPC_MESSAGE(request, makeOrderRequest);
+    NEW_RPC_MESSAGE(response, makeOrderResponse);
+
+    request->set_price(100);
+    request->set_goods("apple");
+
+    NEW_RPC_CONTROLLER(controller);
+    controller->SetTimeout(10000);
+
+    auto done = std::make_shared<rapidrpc::RpcClosure>([controller, response]() {
+        if (controller->Failed()) {
+            ERRORLOG("RpcClosure rpc failed: %s", controller->ErrorText().c_str());
+        }
+        else {
+            INFOLOG("RpcClosure rpc success: resp=[%s]", response->ShortDebugString().c_str());
+        }
+    });
+
+    CALL_RPC("198.19.249.138:12345", Order_Stub, makeOrder, controller, request, response, done);
 }
 
 int main() {

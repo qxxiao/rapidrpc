@@ -130,7 +130,7 @@ void Timer::addTimerEvent(TimerEvent::s_ptr event) {
 
 void Timer::deleteTimerEvent(TimerEvent::s_ptr event) {
     // 删除定时任务
-    // TODO: cancel 这里一写一读，这里是否需要加锁，cancel 仅仅用于标记吗
+    // TODO: cancel 这里一写一读，这里是否需要加锁
     event->setCanceled(true);
 
     bool is_reset_timerfd = false;

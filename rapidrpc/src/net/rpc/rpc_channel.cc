@@ -30,8 +30,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     RpcController *rpc_controller = dynamic_cast<RpcController *>(controller);
     if (!rpc_controller) {
         ERRORLOG("RpcChannel::CallMethod: msg_id=[%s], RpcController is null", req->m_msg_id.c_str());
-        if (done)
-            done->Run();
         return;
     }
     // check msg_id
@@ -71,6 +69,8 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     s_ptr channel = shared_from_this(); // shared_ptr, error if raw pointer not managed by shared_ptr
 
     // set timeout task
+    // !! req, channel will not be released until timeout task is executed
+    // 如果没有超时，在取消定时任务时务必释放 req, channel，将定时任务回调函数清空/或者直接调用 deleteTimerEvent
     m_timer_event = std::make_shared<TimerEvent>(rpc_controller->GetTimeout(), false, [req, channel]() {
         // timeout task
         auto controller = std::dynamic_pointer_cast<RpcController>(channel->m_controller);
@@ -109,8 +109,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                     return;
                 }
                 // 成功读取到 msg 数据包后，取消超时任务
-                // channel->m_client->deleteTimerEvent(channel->m_timer_event);
-                channel->m_timer_event->setCanceled(true); // cancel timeout task, and delete from timer queue
+                // channel->m_client->deleteTimerEvent(channel->m_timer_event); // better
+                channel->m_timer_event->setCanceled(
+                    true); // cancel timeout task, and delete from timer queue until next timeout/onTimer
 
                 // after read response tiny pb protocol
                 TinyPBProtocol::s_ptr resp = std::dynamic_pointer_cast<TinyPBProtocol>(msg);

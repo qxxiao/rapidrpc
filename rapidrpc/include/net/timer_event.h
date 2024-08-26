@@ -29,6 +29,8 @@ public:
 
     void setCanceled(bool value) {
         m_is_canceled = value;
+        // clear task, avoid capture variable in lambda function cannot be released/circular reference, memory leak
+        m_task = nullptr;
     }
 
     bool isCanceled() const {
