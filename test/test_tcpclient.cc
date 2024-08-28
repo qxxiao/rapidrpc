@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 int main() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");

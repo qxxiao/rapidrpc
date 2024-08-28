@@ -9,7 +9,7 @@ using namespace std;
 int main() {
 
     // set config
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // 5 threads

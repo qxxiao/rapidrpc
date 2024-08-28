@@ -12,11 +12,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 
-# set cmake  binary directory
-set(EXECUTABLE_OUTPUT_PATH ${project_dir}/bin)
-set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${project_dir}/lib)
+# set cmake  directory
+set(EXECUTABLE_OUTPUT_PATH ${project_dir}/bin) # or set properties in add_executable RUNTIME_OUTPUT_DIRECTORY
+set (LIBRARY_OUTPUT_PATH ${project_dir}/lib)   # or set properties in add_library LIBRARY_OUTPUT_DIRECTORY
 include_directories(${project_dir}/include)
 include_directories(${project_dir}/pb)
+
+# add library
+file(GLOB_RECURSE CC_FILES ${project_dir}/src/*.cc)
+add_library(${PROJECT_NAME} STATIC ${CC_FILES})
+# install(TARGETS ${PROJECT_NAME} ARCHIVE DESTINATION /path/to/your/lib)
 
 # add sub directories
 add_subdirectory(test)

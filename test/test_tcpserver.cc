@@ -8,7 +8,7 @@
 
 int main() {
 
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // ipv4

@@ -15,7 +15,7 @@ using namespace std;
 using TriggerEvent = rapidrpc::TriggerEvent;
 
 int main() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::EventLoop eventloop; // contains a wakeup fd event
