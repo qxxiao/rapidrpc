@@ -1,5 +1,5 @@
-FILE(GLOB test_log_src_files  ${project_dir}/src/common/*.cc)
-FILE(GLOB test_config_src_files  ${project_dir}/src/common/*.cc)
+FILE(GLOB test_log_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
+FILE(GLOB test_config_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_eventloop_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_eventloop_timer_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)
 FILE(GLOB test_io_thread_src_files  ${project_dir}/src/common/*.cc ${project_dir}/src/net/*.cc)

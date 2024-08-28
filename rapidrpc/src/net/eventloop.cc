@@ -53,14 +53,14 @@ static int g_epoll_max_events = 10;
 EventLoop::EventLoop() {
     if (t_current_loop) { // CHECK: 每个线程最多一个 EventLoop
         ERRORLOG("Failed to create EventLoop. Another EventLoop exists in this thread");
-        exit(0);
+        exit(-1);
     }
 
     m_tid = getThreadId();
     m_epoll_fd = epoll_create(100);
     if (m_epoll_fd < 0) {
         ERRORLOG("Failed to create epoll fd, error [%s]", strerror(errno));
-        exit(0);
+        exit(-1);
     }
 
     initWakeupFdEvent(); // 添加 m_wakeup_fd 到 epoll 中
@@ -89,7 +89,7 @@ void EventLoop::initWakeupFdEvent() {
     int wakeup_fd = eventfd(0, EFD_NONBLOCK);
     if (wakeup_fd < 0) {
         ERRORLOG("Failed to create eventfd, error [%s]", strerror(errno));
-        exit(0);
+        exit(-1);
     }
     // ! 封装 m_wakeup_fd 为 FdEvent 对象
     // 构造函数中完成设置监听事件和回调函数初始化

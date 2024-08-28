@@ -10,6 +10,7 @@ int main() {
 
     // set config
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // 5 threads
     vector<thread> threads;
@@ -24,5 +25,7 @@ int main() {
     for (auto &t : threads) {
         t.join();
     }
+
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

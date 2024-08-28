@@ -9,6 +9,7 @@
 int main() {
 
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // ipv4
     // rapidrpc::IpNetAddr ipNetAddr("0.0.0.0:12345");
@@ -20,5 +21,6 @@ int main() {
     rapidrpc::TcpServer tcpServer(ipNetAddr); // init TcpServer and listen, add acceptor to mainReactor
     tcpServer.start();                        // start SubReactor & MainReactor EventLoop
 
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

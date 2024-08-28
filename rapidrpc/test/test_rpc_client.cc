@@ -15,9 +15,11 @@
 
 #include <unistd.h>
 #include <memory>
+#include <stdio.h>
 
 void test1() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
     rapidrpc::NetAddr::s_ptr serverAddr = std::make_shared<rapidrpc::IpNetAddr>("198.19.249.138:12345");
@@ -50,10 +52,13 @@ void test1() {
             DEBUGLOG("Read response success: [%s]", response.ShortDebugString().c_str());
         });
     });
+
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
 }
 
 void test2() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
     rapidrpc::NetAddr::s_ptr serverAddr = std::make_shared<rapidrpc::IpNetAddr>("198.19.249.138:12345");
@@ -83,10 +88,13 @@ void test2() {
 
     Order_Stub stub(channel.get());
     stub.makeOrder(controller.get(), request.get(), response.get(), done.get());
+
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
 }
 
 void test() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc_client.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     NEW_RPC_MESSAGE(request, makeOrderRequest);
     NEW_RPC_MESSAGE(response, makeOrderResponse);
@@ -107,8 +115,13 @@ void test() {
     });
 
     CALL_RPC("198.19.249.138:12345", Order_Stub, makeOrder, controller, request, response, done);
+
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
 }
 
 int main() {
     test();
+    printf("main.....\n");
+
+    return 0;
 }

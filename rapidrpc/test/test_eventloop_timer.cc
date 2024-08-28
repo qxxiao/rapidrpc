@@ -15,6 +15,7 @@ using TriggerEvent = rapidrpc::TriggerEvent;
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     rapidrpc::EventLoop eventloop; // contains a wakeup fd event
 
@@ -72,5 +73,6 @@ int main() {
     eventloop.addTimerEvent(timer_event); // 向其中 Timer 添加 TimerEvent
 
     eventloop.loop();
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

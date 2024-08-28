@@ -4,6 +4,7 @@
 #include "common/error_code.h"
 #include "net/rpc/rpc_controller.h"
 #include "net/tcp/net_addr.h"
+#include "common/runtime.h"
 
 #include <google/protobuf/service.h>
 #include <google/protobuf/descriptor.h>
@@ -88,6 +89,9 @@ void Dispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::s_p
     rpcController.SetPeerAddr(nullptr);
     rpcController.SetMsgId(req->m_msg_id);
 
+    // set app context for runtime
+    Runtime::GetRuntime()->setMsgId(req->m_msg_id);
+    Runtime::GetRuntime()->setMethodName(method_name);
     service->CallMethod(method_desc, &rpcController, func_req, func_resp, nullptr);
 
     // serialize response

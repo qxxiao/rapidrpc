@@ -6,14 +6,14 @@
     TiXmlElement *name##_element = parent->FirstChildElement(#name);                                                   \
     if (!name##_element) {                                                                                             \
         printf("Start server error, %s element is null\n", #name);                                                     \
-        exit(0);                                                                                                       \
+        exit(-1);                                                                                                      \
     }
 
 #define READ_STR_FROM_XML_NODE(name, parent)                                                                           \
     TiXmlElement *name##_element = parent->FirstChildElement(#name);                                                   \
     if (!name##_element || !name##_element->GetText()) {                                                               \
         printf("Start server error, %s element is null\n", #name);                                                     \
-        exit(0);                                                                                                       \
+        exit(-1);                                                                                                      \
     }                                                                                                                  \
     std::string name = std::string(name##_element->GetText());
 
@@ -40,7 +40,7 @@ Config::Config(const char *xmlfile) {
     bool load_ok = xml_document->LoadFile(xmlfile);
     if (!load_ok) {
         printf("Start server error, load config file %s failed\n", xmlfile);
-        exit(0);
+        exit(-1);
     }
 
     //* params: xml's element name, parent_element
@@ -49,8 +49,22 @@ Config::Config(const char *xmlfile) {
 
     // read str from parent node
     READ_STR_FROM_XML_NODE(log_level, log_element);
+    READ_STR_FROM_XML_NODE(log_file_name, log_element);
+    READ_STR_FROM_XML_NODE(log_file_path, log_element);
+    READ_STR_FROM_XML_NODE(log_sync_interval, log_element);
+    READ_STR_FROM_XML_NODE(log_max_file_size, log_element);
 
     m_log_level = std::move(log_level);
+
+    m_log_file_name = std::move(log_file_name);
+    m_log_file_path = std::move(log_file_path);
+    m_log_sync_interval = std::stoi(log_sync_interval);
+    m_log_max_file_size = std::stoi(log_max_file_size);
+
+    printf("Config load success\n");
+    printf("log level[%s], log file name[%s], log file path[%s], log sync interval[%d], log max file size[%d]\n",
+           m_log_level.c_str(), m_log_file_name.c_str(), m_log_file_path.c_str(), m_log_sync_interval,
+           m_log_max_file_size);
 }
 
 } // namespace rapidrpc

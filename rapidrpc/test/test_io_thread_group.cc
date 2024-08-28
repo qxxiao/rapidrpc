@@ -17,6 +17,7 @@ using TriggerEvent = rapidrpc::TriggerEvent;
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::EventLoop eventloop; // contains a wakeup fd event
 
@@ -79,6 +80,6 @@ int main() {
     io_thread_group.start(); // start all threads's eventloop while cycle in group
     io_thread_group.join();
 
-    // wait
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

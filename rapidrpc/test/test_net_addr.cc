@@ -8,6 +8,7 @@
 int main() {
 
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // test NetAddr
     // ipv4
@@ -69,5 +70,6 @@ int main() {
         write(clientfd, buf, n);
     }
 
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

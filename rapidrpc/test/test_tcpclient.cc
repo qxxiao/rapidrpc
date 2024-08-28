@@ -13,6 +13,7 @@
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
     rapidrpc::NetAddr::s_ptr serverAddr = std::make_shared<rapidrpc::IpNetAddr>("198.19.249.138:12345");
@@ -38,5 +39,6 @@ int main() {
     });
 
     sleep(10);
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
     return 0;
 }

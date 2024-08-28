@@ -10,15 +10,17 @@
 
 #include <google/protobuf/service.h>
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 
 // 服务端实现
 class OrderImpl: public Order {
 public:
     void makeOrder(google::protobuf::RpcController *controller, const ::makeOrderRequest *request,
                    ::makeOrderResponse *response, google::protobuf::Closure *done) {
-        DEBUGLOG("server conn start sleeping 5s");
+        APPDEBUGLOG("server start sleeping 5s");
         sleep(5);
-        DEBUGLOG("server conn end sleeping 5s");
+        APPDEBUGLOG("server end sleeping 5s");
         if (request->price() < 10) {
             response->set_ret_code(-1);
             response->set_res_info("short of money");
@@ -27,11 +29,13 @@ public:
         response->set_ret_code(0);
         response->set_res_info("success");
         response->set_order_id("20240101");
+        APPDEBUGLOG("rpc call success");
     }
 };
 
 int main() {
     rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Logger::InitGlobalLogger();
 
     // register service
     // service name: "Order", is the same as the service name in proto file | Order base on Order.proto
@@ -43,4 +47,6 @@ int main() {
 
     rapidrpc::TcpServer tcpServer(ipNetAddr); // init TcpServer and listen, add acceptor to mainReactor
     tcpServer.start();                        // start SubReactor & MainReactor EventLoop
+
+    rapidrpc::Logger::GetGlobalLogger()->flushAndStop();
 }

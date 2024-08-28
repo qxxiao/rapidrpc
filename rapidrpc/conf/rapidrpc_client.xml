@@ -2,7 +2,7 @@
 <root>
     <log>
         <log_level>DEBUG</log_level>
-        <log_file_name>rpc_server</log_file_name>
+        <log_file_name>rpc_client</log_file_name>
         <log_file_path>/home/xiao/rapidrpc/rapidrpc/log/</log_file_path>
         <log_sync_interval>500</log_sync_interval>
         <log_max_file_size>10000000</log_max_file_size>

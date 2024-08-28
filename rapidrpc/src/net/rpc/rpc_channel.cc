@@ -6,8 +6,8 @@
 #include "common/log.h"
 #include "common/error_code.h"
 
-#include "google/protobuf/message.h"
-#include "google/protobuf/descriptor.h"
+#include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
 
 namespace rapidrpc {
 

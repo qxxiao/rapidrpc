@@ -48,7 +48,7 @@ public:
     void resetArriveTime();
 
 private:
-    int64_t m_arrive_time;     // 到达时间点/时间戳
+    int64_t m_arrive_time;     // 到达时间点/时间戳(ms), 可用于重复任务
     int64_t m_interval;        // 间隔时间
     bool m_is_repeat{false};   // 是否重复
     bool m_is_canceled{false}; // 是否取消

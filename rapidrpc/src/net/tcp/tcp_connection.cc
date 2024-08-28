@@ -39,7 +39,10 @@ TcpConnection::TcpConnection(EventLoop *event_loop, int fd, int buffer_size, Net
     }
 }
 
-TcpConnection::~TcpConnection() {}
+TcpConnection::~TcpConnection() {
+    DEBUGLOG("TcpConnection::~TcpConnection, peer_addr=[%s], fd=[%d]", m_peer_addr->toString().c_str(),
+             m_fd_event->getFd());
+}
 
 void TcpConnection::onRead() {
     // 读取数据
