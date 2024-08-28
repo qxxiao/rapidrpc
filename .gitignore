@@ -2,3 +2,4 @@
 **/**/build
 **/**/bin
 rapidrpc/.gdb_history
+rapidrpc/log/rpc*
