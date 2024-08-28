@@ -1,5 +1,5 @@
 .vscode
 **/**/build
 **/**/bin
-rapidrpc/.gdb_history
-rapidrpc/log/rpc*
+**/**/.gdb_history
+log/rpc*
