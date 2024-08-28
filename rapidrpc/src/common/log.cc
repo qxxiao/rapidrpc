@@ -184,7 +184,7 @@ AsyncLogger::AsyncLogger(const std::string &file_name, const std::string &file_p
 void AsyncLogger::loop() {
     sem_post(&m_sem);
 
-    while (!m_stop_flag) {
+    while (true) {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_cond.wait(lock, [this] {
             return !m_buffer.empty() || m_stop_flag;

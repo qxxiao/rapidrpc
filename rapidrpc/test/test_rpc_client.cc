@@ -121,7 +121,6 @@ void test() {
 
 int main() {
     test();
-    printf("main.....\n");
 
     return 0;
 }
