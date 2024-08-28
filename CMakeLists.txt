@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "-g -O0 -Wall -Wno-format-security -Wno-unused-but-set-varia
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_BUILD_PARALLEL_LEVEL 10)
 
 
 
@@ -25,3 +26,15 @@ add_library(${PROJECT_NAME} STATIC ${CC_FILES})
 
 # add sub directories
 add_subdirectory(test)
+
+# 指定头文件目录的安装路径
+set(CMAKE_INSTALL_PREFIX /usr/local)
+install(DIRECTORY ${project_dir}/include/
+        DESTINATION include
+        COMPONENT headers)
+
+# 指定库文件的安装路径
+install(TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        COMPONENT libraries)
