@@ -18,7 +18,7 @@
 #include <stdio.h>
 
 void test1() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
@@ -57,7 +57,7 @@ void test1() {
 }
 
 void test2() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     // rapidrpc::IpNetAddr serverAddr("198.19.249.138:12345");
@@ -93,7 +93,7 @@ void test2() {
 }
 
 void test() {
-    rapidrpc::Config::SetGlobalConfig("/home/xiao/rapidrpc/rapidrpc/conf/rapidrpc_client.xml");
+    rapidrpc::Config::SetGlobalConfig(nullptr);
     rapidrpc::Logger::InitGlobalLogger();
 
     NEW_RPC_MESSAGE(request, makeOrderRequest);

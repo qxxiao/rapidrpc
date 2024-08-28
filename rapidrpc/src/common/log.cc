@@ -23,7 +23,8 @@ Logger *Logger::GetGlobalLogger() {
     }
     // default is INFO(unkown level string)
     LogLevel global_log_level = logLevelFromString(Config::GetGlobalConfig()->m_log_level);
-    static Logger logger(global_log_level); //  thread safe
+    LogType global_log_type = Config::GetGlobalConfig()->m_log_type;
+    static Logger logger(global_log_level, global_log_type); //  thread safe
     g_logger = &logger;
     return g_logger;
 }
@@ -35,23 +36,28 @@ void Logger::InitGlobalLogger() {
     GetGlobalLogger()->init();
 }
 
-Logger::Logger(LogLevel level) : m_set_level(level) {
-    m_async_logger = std::make_shared<AsyncLogger>(Config::GetGlobalConfig()->m_log_file_name + "_rpc",
-                                                   Config::GetGlobalConfig()->m_log_file_path,
-                                                   Config::GetGlobalConfig()->m_log_max_file_size);
+Logger::Logger(LogLevel level, LogType type) : m_set_level(level), m_log_type(type) {
+    if (m_log_type == LogType::AsyncLog) {
 
-    m_async_app_logger = std::make_shared<AsyncLogger>(Config::GetGlobalConfig()->m_log_file_name + "_app",
+        m_async_logger = std::make_shared<AsyncLogger>(Config::GetGlobalConfig()->m_log_file_name + "_rpc",
                                                        Config::GetGlobalConfig()->m_log_file_path,
                                                        Config::GetGlobalConfig()->m_log_max_file_size);
+
+        m_async_app_logger = std::make_shared<AsyncLogger>(Config::GetGlobalConfig()->m_log_file_name + "_app",
+                                                           Config::GetGlobalConfig()->m_log_file_path,
+                                                           Config::GetGlobalConfig()->m_log_max_file_size);
+    }
 }
 
 // 二段构造
 void Logger::init() {
 
     // !! 不能在构造函数中直接初始化 m_timer_event，因为 TimerEvent 的构造函数中会调用 DEBUGLOG, 造成死循环
-    m_timer_event = std::make_shared<TimerEvent>(Config::GetGlobalConfig()->m_log_sync_interval, true,
-                                                 std::bind(&Logger::syncLogs, this));
-    EventLoop::GetCurrentEventLoop()->addTimerEvent(m_timer_event);
+    if (m_log_type == LogType::AsyncLog) {
+        m_timer_event = std::make_shared<TimerEvent>(Config::GetGlobalConfig()->m_log_sync_interval, true,
+                                                     std::bind(&Logger::syncLogs, this));
+        EventLoop::GetCurrentEventLoop()->addTimerEvent(m_timer_event);
+    }
 }
 
 void Logger::syncLogs() {
@@ -77,14 +83,16 @@ void Logger::syncLogs() {
 }
 
 void Logger::flushAndStop() {
-    // 如果有剩余的日志，同步到 m_async_logger | m_async_app_logger
-    syncLogs();
+    if (m_log_type == LogType::AsyncLog) {
+        // 如果有剩余的日志，同步到 m_async_logger | m_async_app_logger
+        syncLogs();
 
-    if (m_async_logger) {
-        m_async_logger->stop(); // join thread
-    }
-    if (m_async_app_logger) {
-        m_async_app_logger->stop(); // join thread
+        if (m_async_logger) {
+            m_async_logger->stop(); // join thread
+        }
+        if (m_async_app_logger) {
+            m_async_app_logger->stop(); // join thread
+        }
     }
 }
 
@@ -144,6 +152,12 @@ std::string LogEvent::toString() {
 }
 
 void Logger::pushLog(const std::string &msg) {
+    // client log
+    if (m_log_type == LogType::SyncLog) {
+        printf("%s", msg.c_str());
+        return;
+    }
+
     // 线程安全性
     std::lock_guard<std::mutex> lock(m_mutex);
     m_buffer.push_back(msg);

@@ -41,9 +41,8 @@ int main() {
     // service name: "Order", is the same as the service name in proto file | Order base on Order.proto
     rapidrpc::Dispatcher::GetDispatcher()->registerService(std::make_shared<OrderImpl>());
 
-    // ipv4
-    // rapidrpc::IpNetAddr ipNetAddr("0.0.0.0:12345");
-    std::shared_ptr<rapidrpc::NetAddr> ipNetAddr = std::make_shared<rapidrpc::IpNetAddr>("0.0.0.0:12345");
+    std::shared_ptr<rapidrpc::NetAddr> ipNetAddr = std::make_shared<rapidrpc::IpNetAddr>(
+        rapidrpc::Config::GetGlobalConfig()->m_ip, rapidrpc::Config::GetGlobalConfig()->m_port);
 
     rapidrpc::TcpServer tcpServer(ipNetAddr); // init TcpServer and listen, add acceptor to mainReactor
     tcpServer.start();                        // start SubReactor & MainReactor EventLoop

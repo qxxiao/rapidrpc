@@ -1,5 +1,6 @@
 #include "net/tcp/tcp_server.h"
 #include "common/log.h"
+#include "common/config.h"
 #include "net/fd_event_group.h"
 
 namespace rapidrpc {
@@ -27,8 +28,7 @@ void TcpServer::init() {
     m_main_event_loop = EventLoop::GetCurrentEventLoop();     // mainReactor 静态创建一个Loop
 
     // 读取配置， 创建 IOThreadGroup 对象
-    // TODO: 读取配置文件和配置类
-    m_io_thread_group = new IOThreadGroup(2);
+    m_io_thread_group = new IOThreadGroup(Config::GetGlobalConfig()->m_io_threads);
 
     m_listen_fd_event = FdEventGroup::GetGlobalFdEventGroup()->getFdEvent(m_acceptor->getListenFd());
     // ! set non-blocking

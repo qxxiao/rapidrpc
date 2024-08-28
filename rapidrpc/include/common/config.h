@@ -1,6 +1,8 @@
 #ifndef RAPIDRPC_COMMON_CONFIG_H
 #define RAPIDRPC_COMMON_CONFIG_H
 
+#include "common/log.h"
+
 #include <string>
 
 namespace rapidrpc {
@@ -12,6 +14,9 @@ namespace rapidrpc {
  */
 class Config {
 private:
+    // for client config
+    Config();
+    // for server config
     Config(const char *xmlfile);
 
 public:
@@ -26,6 +31,12 @@ public:
     std::string m_log_file_path;
     int m_log_max_file_size; // bytes
     int m_log_sync_interval; // ms
+
+    std::string m_ip;
+    int m_port;
+    int m_io_threads;
+
+    LogType m_log_type;
 };
 
 } // namespace rapidrpc

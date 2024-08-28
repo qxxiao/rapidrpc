@@ -111,11 +111,13 @@ private:
  */
 // pre-declare AsyncLogger and AsyncLogger::s_ptr
 class AsyncLogger;
+enum class LogType { AsyncLog = 1, SyncLog = 2 };
 class Logger {
 public:
     typedef std::shared_ptr<Logger> s_ptr;
 
-    Logger(LogLevel level = LogLevel::Info);
+public:
+    Logger(LogLevel level = LogLevel::Debug, LogType log_type = LogType::AsyncLog);
     void init();
 
     LogLevel getLogLevel() const {
@@ -145,6 +147,8 @@ private:
     std::shared_ptr<AsyncLogger> m_async_app_logger;
 
     TimerEvent::s_ptr m_timer_event;
+
+    LogType m_log_type;
 };
 
 /**
